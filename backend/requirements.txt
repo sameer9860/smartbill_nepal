@@ -1,0 +1,15 @@
+asgiref==3.11.1
+Django==6.0.6
+djangorestframework==3.17.1
+joblib==1.5.3
+narwhals==2.23.0
+numpy==2.5.0
+pandas==3.0.3
+pillow==12.3.0
+psycopg2-binary==2.9.12
+python-dateutil==2.9.0.post0
+scikit-learn==1.9.0
+scipy==1.18.0
+six==1.17.0
+sqlparse==0.5.5
+threadpoolctl==3.6.0
