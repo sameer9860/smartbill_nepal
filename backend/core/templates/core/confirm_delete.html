@@ -1,0 +1,30 @@
+{% extends 'core/base.html' %}
+{% block title %}- Confirm Delete{% endblock %}
+{% block page_title %}Confirm Delete{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="card border-danger">
+            <div class="card-header text-danger">
+                <i class="bi bi-trash"></i> Confirm Delete
+            </div>
+            <div class="card-body text-center">
+                <i class="bi bi-exclamation-triangle text-danger fs-1"></i>
+                <h5 class="mt-3">Are you sure you want to delete</h5>
+                <p class="fw-bold fs-5">{{ object }}</p>
+                <p class="text-muted small">This action cannot be undone.</p>
+                <form method="post" class="d-flex justify-content-center gap-3 mt-3">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Yes, Delete
+                    </button>
+                    <a href="{% url 'product_list' %}" class="btn btn-outline-secondary">
+                        Cancel
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
