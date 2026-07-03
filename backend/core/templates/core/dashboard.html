@@ -1,0 +1,175 @@
+<!-- core/templates/core/dashboard.html -->
+{% extends 'core/base.html' %}
+{% block title %}- Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<!-- Stat Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <p class="text-muted small mb-1">Total Products</p>
+                    <h3 class="fw-bold mb-0">{{ total_products }}</h3>
+                </div>
+                <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                    <i class="bi bi-box-seam"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="border-left-color: #4caf50">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <p class="text-muted small mb-1">Total Customers</p>
+                    <h3 class="fw-bold mb-0">{{ total_customers }}</h3>
+                </div>
+                <div class="stat-icon bg-success bg-opacity-10 text-success">
+                    <i class="bi bi-people"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="border-left-color: #ff9800">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <p class="text-muted small mb-1">Total Invoices</p>
+                    <h3 class="fw-bold mb-0">{{ total_invoices }}</h3>
+                </div>
+                <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                    <i class="bi bi-file-earmark-text"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="border-left-color: #e53935">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <p class="text-muted small mb-1">Total Revenue</p>
+                    <h3 class="fw-bold mb-0">Rs {{ total_revenue|floatformat:2 }}</h3>
+                </div>
+                <div class="stat-icon bg-danger bg-opacity-10 text-danger">
+                    <i class="bi bi-currency-exchange"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts + Recent Invoices -->
+<div class="row g-4 mb-4">
+    <!-- Revenue Chart -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-bar-chart text-primary"></i> Monthly Revenue (Last 6 Months)
+            </div>
+            <div class="card-body">
+                <canvas id="revenueChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Low Stock -->
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header text-danger">
+                <i class="bi bi-exclamation-triangle"></i> Low Stock Alerts
+            </div>
+            <div class="card-body p-0">
+                {% if low_stock_products %}
+                <ul class="list-group list-group-flush">
+                    {% for product in low_stock_products %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="small fw-semibold">{{ product.name }}</span>
+                        <span class="badge bg-danger rounded-pill">{{ product.stock_quantity }} left</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-check-circle fs-3 text-success"></i>
+                    <p class="mt-2 small">All stock levels are healthy!</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Invoices -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between">
+        <span><i class="bi bi-clock-history text-primary"></i> Recent Invoices</span>
+        <a href="{% url 'invoice_list' %}" class="btn btn-sm btn-primary">View All</a>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Invoice Number </th>
+                    <th>Customer</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for invoice in recent_invoices %}
+                <tr>
+                    <td><strong>{{ invoice.invoice_number }}</strong></td>
+                    <td>{{ invoice.customer.full_name }}</td>
+                    <td>Rs {{ invoice.grand_total|floatformat:2 }}</td>
+                    <td>
+                        <span class="badge badge-{{ invoice.status|lower }}">
+                            {{ invoice.status }}
+                        </span>
+                    </td>
+                    <td>{{ invoice.created_at|date:"d M Y" }}</td>
+                    <td>
+                        <a href="{% url 'invoice_detail' invoice.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-3">No invoices yet</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {{ monthly_labels| safe }},
+        datasets: [{
+            label: 'Revenue (Rs)',
+            data: {{ monthly_data| safe }},
+        backgroundColor: 'rgba(26, 35, 126, 0.7)',
+        borderColor: 'rgba(26, 35, 126, 1)',
+        borderWidth: 1,
+        borderRadius: 6,
+        }]
+    },
+        options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+    }
+});
+</script>
+{% endblock %}
