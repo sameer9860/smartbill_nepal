@@ -1,0 +1,91 @@
+{% extends 'core/base.html' %}
+{% block title %}- Create Invoice{% endblock %}
+{% block page_title %}Create Invoice{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-file-earmark-plus text-primary"></i> Create New Invoice
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Customer</label>
+                    {{ form.customer }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">Status</label>
+                    {{ form.status }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">Discount (%)</label>
+                    {{ form.discount }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">Tax (%)</label>
+                    {{ form.tax }}
+                </div>
+            </div>
+
+            <!-- Invoice Items -->
+            <h6 class="fw-bold mb-3">Invoice Items</h6>
+            {{ formset.management_form }}
+            <table class="table" id="items-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Unit Price (Rs)</th>
+                        <th>Subtotal</th>
+                        <th>Remove</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item_form in formset %}
+                    <tr class="item-row">
+                        <td>{{ item_form.product }}</td>
+                        <td>{{ item_form.quantity }}</td>
+                        <td>{{ item_form.unit_price }}</td>
+                        <td><span class="subtotal fw-bold text-primary">Rs 0.00</span></td>
+                        <td>{{ item_form.DELETE }}</td>
+                        {% for hidden in item_form.hidden_fields %}{{ hidden }}{% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Notes</label>
+                {{ form.notes }}
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg"></i> Create Invoice
+                </button>
+                <a href="{% url 'invoice_list' %}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-calculate subtotal per row
+document.querySelectorAll('.item-row').forEach(row => {
+    const qty = row.querySelector('input[name*="quantity"]');
+    const price = row.querySelector('input[name*="unit_price"]');
+    const subtotal = row.querySelector('.subtotal');
+    function calc() {
+        const q = parseFloat(qty.value) || 0;
+        const p = parseFloat(price.value) || 0;
+        subtotal.textContent = 'Rs ' + (q * p).toFixed(2);
+    }
+    qty.addEventListener('input', calc);
+    price.addEventListener('input', calc);
+});
+</script>
+{% endblock %}
