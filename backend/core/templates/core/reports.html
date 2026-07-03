@@ -1,0 +1,62 @@
+{% extends 'core/base.html' %}
+{% block title %}- Reports{% endblock %}
+{% block page_title %}Reports & Analytics{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <p class="text-muted small mb-1">Total Revenue (Paid)</p>
+            <h3 class="fw-bold text-primary">Rs {{ total_revenue|floatformat:2 }}</h3>
+        </div>
+    </div>
+    {% for s in status_data %}
+    <div class="col-md-4">
+        <div class="stat-card">
+            <p class="text-muted small mb-1">{{ s.status }} Invoices</p>
+            <h3 class="fw-bold">{{ s.count }}</h3>
+            <small class="text-muted">Rs {{ s.total|floatformat:2 }}</small>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-bar-chart text-primary"></i> Top Selling Products
+    </div>
+    <div class="card-body">
+        <canvas id="topProductsChart" height="80"></canvas>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script id="chart-data" type="application/json">
+    {
+        "labels": {{ top_product_labels|safe }},
+        "data": {{ top_product_data|safe }}
+    }
+</script>
+<script>
+    const chartJson = JSON.parse(document.getElementById('chart-data').textContent);
+    const ctx = document.getElementById('topProductsChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: chartJson.labels,
+            datasets: [{
+                label: 'Revenue (Rs)',
+                data: chartJson.data,
+                backgroundColor: 'rgba(26, 35, 126, 0.7)',
+                borderRadius: 6,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+</script>
+{% endblock %}

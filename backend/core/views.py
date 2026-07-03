@@ -1,12 +1,11 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
-from django.db.models import Sum, Count, Q
+from django.db.models import Sum, Count, Q, ExpressionWrapper, DecimalField, F, F as F_expr
 from django.utils import timezone
 from datetime import timedelta
 from .models import Product, Customer, Invoice, InvoiceItem, StockMovement, Category
 from .forms import ProductForm, CustomerForm, InvoiceForm, InvoiceItemFormSet
 import json
-from django.db.models import F
 
 
 # DASHBOARD
@@ -250,11 +249,15 @@ def low_stock_alerts(request):
 # REPORTS
 def reports(request):
     # Top selling products
+    revenue_expr = ExpressionWrapper(
+        F_expr('unit_price') * F_expr('quantity'),
+        output_field=DecimalField(max_digits=12, decimal_places=2)
+    )
     top_products = InvoiceItem.objects.values(
         'product__name'
     ).annotate(
         total_qty=Sum('quantity'),
-        total_revenue=Sum('subtotal')
+        total_revenue=Sum(revenue_expr)
     ).order_by('-total_qty')[:10]
 
     # Invoice status breakdown
