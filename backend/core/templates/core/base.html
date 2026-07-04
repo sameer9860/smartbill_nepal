@@ -162,6 +162,9 @@
         <a href="{% url 'reports' %}" class="nav-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
             <i class="bi bi-bar-chart"></i> Reports
         </a>
+        <a href="{% url 'ai_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'ai_dashboard' %}active{% endif %}">
+            <i class="bi bi-robot"></i> AI Insights
+        </a>
     </nav>
 </div>
 

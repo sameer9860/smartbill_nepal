@@ -1,0 +1,260 @@
+<!-- core/templates/core/ai_dashboard.html -->
+{% extends 'core/base.html' %}
+{% block title %}- AI Insights{% endblock %}
+{% block page_title %}AI Insights & Predictions{% endblock %}
+
+{% block content %}
+
+<!-- Summary Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card" style="border-left-color: #e53935">
+            <p class="text-muted small mb-1">Critical Stock Alerts</p>
+            <h3 class="fw-bold text-danger">
+                {{ low_stock_predictions|length }}
+            </h3>
+            <small class="text-muted">Products need attention</small>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card" style="border-left-color: #4caf50">
+            <p class="text-muted small mb-1">30-Day Revenue Forecast</p>
+            <h3 class="fw-bold text-success">
+                Rs {% if forecast %}{{ forecast.total_forecast }}{% else %}0{% endif %}
+            </h3>
+            <small class="text-muted">Predicted next 30 days</small>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card" style="border-left-color: #ff9800">
+            <p class="text-muted small mb-1">Avg Daily Forecast</p>
+            <h3 class="fw-bold text-warning">
+                Rs {% if forecast %}{{ forecast.avg_daily_forecast }}{% else %}0{% endif %}
+            </h3>
+            <small class="text-muted">Per day revenue estimate</small>
+        </div>
+    </div>
+</div>
+
+<!-- Sales Forecast Chart -->
+{% if forecast %}
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="bi bi-graph-up text-success"></i>
+        Sales Forecast — Next 30 Days (Linear Regression)
+    </div>
+    <div class="card-body">
+        <canvas id="forecastChart" height="80"></canvas>
+    </div>
+</div>
+{% endif %}
+
+<div class="row g-4 mb-4">
+
+    <!-- Stock Risk Predictions -->
+    <div class="col-md-7">
+        <div class="card h-100">
+            <div class="card-header text-danger">
+                <i class="bi bi-exclamation-triangle"></i>
+                Stock Risk Predictions
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Stock</th>
+                            <th>Avg Daily Sales</th>
+                            <th>Days Left</th>
+                            <th>Risk</th>
+                            <th>Restock</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in low_stock_predictions %}
+                        {% if item.days_until_stockout < 999 %}
+                        <tr>
+                            <td><strong>{{ item.product.name }}</strong></td>
+                            <td>{{ item.product.stock_quantity }}</td>
+                            <td>{{ item.avg_daily_sales }}</td>
+                            <td>
+                                <span class="fw-bold
+                                    {% if item.days_until_stockout <= 7 %}text-danger
+                                    {% elif item.days_until_stockout <= 14 %}text-warning
+                                    {% else %}text-success{% endif %}">
+                                    {{ item.days_until_stockout }} days
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge
+                                    {% if item.risk == 'CRITICAL' %}bg-danger
+                                    {% elif item.risk == 'HIGH' %}bg-warning text-dark
+                                    {% elif item.risk == 'MEDIUM' %}bg-info text-dark
+                                    {% else %}bg-success{% endif %}">
+                                    {{ item.risk }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="text-primary fw-semibold">
+                                    +{{ item.recommended_restock }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-3">
+                                No sales data available yet
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Sales Chart -->
+    <div class="col-md-5">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="bi bi-pie-chart text-primary"></i>
+                Sales by Category (Last 30 Days)
+            </div>
+            <div class="card-body">
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Product Recommendations -->
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-lightbulb text-warning"></i>
+        AI Restock Recommendations (Top 10 by Revenue)
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Sold (30d)</th>
+                    <th>Revenue (30d)</th>
+                    <th>Current Stock</th>
+                    <th>Recommended Restock</th>
+                    <th>Priority</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rec in recommendations %}
+                <tr>
+                    <td><strong>{{ rec.product.name }}</strong></td>
+                    <td>{{ rec.total_sold_30d }}</td>
+                    <td>Rs {{ rec.revenue_30d }}</td>
+                    <td>{{ rec.current_stock }}</td>
+                    <td>
+                        <span class="text-primary fw-bold">
+                            +{{ rec.restock_qty }} units
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge {% if rec.priority == 'HIGH' %}bg-danger{% else %}bg-secondary{% endif %}">
+                            {{ rec.priority }}
+                        </span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-3">
+                        No sales data available yet. Create some invoices first!
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+{% if forecast %}
+// Sales Forecast Chart
+const forecastCtx = document.getElementById('forecastChart').getContext('2d');
+new Chart(forecastCtx, {
+    type: 'line',
+    data: {
+        labels: [
+            ...{{ forecast.historical_labels|safe }},
+            ...{{ forecast.forecast_labels|safe }}
+        ],
+        datasets: [
+            {
+                label: 'Actual Revenue',
+                data: [
+                    ...{{ forecast.historical_data|safe }},
+                    ...Array({{ forecast.forecast_labels|length }}).fill(null)
+                ],
+                borderColor: 'rgba(26, 35, 126, 1)',
+                backgroundColor: 'rgba(26, 35, 126, 0.1)',
+                fill: true,
+                tension: 0.4,
+            },
+            {
+                label: 'Forecasted Revenue',
+                data: [
+                    ...Array({{ forecast.historical_labels|length }}).fill(null),
+                    ...{{ forecast.forecast_data|safe }}
+                ],
+                borderColor: 'rgba(76, 175, 80, 1)',
+                backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                borderDash: [5, 5],
+                fill: true,
+                tension: 0.4,
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        interaction: { intersect: false, mode: 'index' },
+        plugins: {
+            legend: { position: 'top' },
+            tooltip: {
+                callbacks: {
+                    label: ctx => `Rs ${ctx.parsed.y?.toFixed(2) ?? 'N/A'}`
+                }
+            }
+        },
+        scales: {
+            y: { beginAtZero: true }
+        }
+    }
+});
+{% endif %}
+
+// Category Pie Chart
+const catCtx = document.getElementById('categoryChart').getContext('2d');
+new Chart(catCtx, {
+    type: 'doughnut',
+    data: {
+        labels: {{ cat_labels|safe }},
+        datasets: [{
+            data: {{ cat_data|safe }},
+            backgroundColor: [
+                '#1a237e', '#e53935', '#4caf50',
+                '#ff9800', '#9c27b0', '#00bcd4'
+            ],
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { position: 'bottom' }
+        }
+    }
+});
+</script>
+{% endblock %}
