@@ -30,4 +30,8 @@ urlpatterns = [
     #AI Dashboard
     path('ai/', views.ai_dashboard, name='ai_dashboard'),
 
+    #test 404 and 500
+    path('test-404/', views.handler404, {'exception': Exception("Test 404 Exception")}),
+    path('test-500/', views.handler500),
+
 ]
