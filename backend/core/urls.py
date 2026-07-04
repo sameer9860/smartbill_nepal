@@ -27,4 +27,7 @@ urlpatterns = [
     path('reports/', views.reports, name='reports'),
     path('low-stock/', views.low_stock_alerts, name='low_stock_alerts'),
 
+    #AI Dashboard
+    path('ai/', views.ai_dashboard, name='ai_dashboard'),
+
 ]

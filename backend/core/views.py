@@ -6,6 +6,12 @@ from datetime import timedelta
 from .models import Product, Customer, Invoice, InvoiceItem, StockMovement, Category
 from .forms import ProductForm, CustomerForm, InvoiceForm, InvoiceItemFormSet
 import json
+from .ai import (
+    predict_low_stock,
+    forecast_sales,
+    get_product_recommendations,
+    get_category_sales_summary
+)
 
 
 # DASHBOARD
@@ -279,3 +285,24 @@ def reports(request):
         'top_product_data': json.dumps([float(p['total_revenue'] or 0) for p in top_products]),
     }
     return render(request, 'core/reports.html', context)
+
+def ai_dashboard(request):
+    """Main AI insights page."""
+    low_stock_predictions = predict_low_stock()
+    recommendations = get_product_recommendations()
+    category_summary = get_category_sales_summary()
+    forecast = forecast_sales(days_ahead=30)
+
+    # Category chart data
+    cat_labels = list(category_summary.keys())
+    cat_data = [v['total_revenue'] for v in category_summary.values()]
+
+    context = {
+        'low_stock_predictions': low_stock_predictions,
+        'recommendations': recommendations,
+        'category_summary': category_summary,
+        'forecast': forecast,
+        'cat_labels': json.dumps(cat_labels),
+        'cat_data': json.dumps(cat_data),
+    }
+    return render(request, 'core/ai_dashboard.html', context)
