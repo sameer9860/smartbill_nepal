@@ -53,6 +53,8 @@ class Customer(models.Model):
 
 
 # Invoice (Bill)
+# core/models.py — update Invoice model
+
 class Invoice(models.Model):
     STATUS_CHOICES = [
         ('PAID', 'Paid'),
@@ -87,7 +89,7 @@ class Invoice(models.Model):
     tax = models.DecimalField(
         max_digits=5,
         decimal_places=2,
-        default=13  # Nepal VAT 13%
+        default=13
     )
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -97,10 +99,18 @@ class Invoice(models.Model):
         return f"Invoice #{self.invoice_number} - {self.customer.full_name}"
 
     @property
+    def discount_amount(self):
+        return round(self.total_amount * self.discount / 100, 2)
+
+    @property
+    def tax_amount(self):
+        return round(self.total_amount * self.tax / 100, 2)
+
+    @property
     def grand_total(self):
-        tax_amount = self.total_amount * self.tax / 100
-        discount_amount = self.total_amount * self.discount / 100
-        return self.total_amount + tax_amount - discount_amount
+        return round(
+            self.total_amount - self.discount_amount + self.tax_amount, 2
+        )
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

@@ -70,12 +70,22 @@
                     <td>Rs {{ invoice.total_amount|floatformat:2 }}</td>
                 </tr>
                 <tr>
-                    <td colspan="4" class="text-end"><strong>VAT ({{ invoice.tax }}%)</strong></td>
-                    <td>Rs {{ invoice.total_amount|floatformat:2 }}</td>
+                    <td colspan="4" class="text-end"><strong>Discount ({{ invoice.discount }}%)</strong></td>
+                    <td class="text-end text-danger">
+                        - Rs {{ invoice.discount_amount|floatformat:2 }} 
+                    </td>
                 </tr>
                 <tr>
+                    <td colspan="4" class="text-end"><strong>VAT ({{ invoice.tax }}%)</strong></td>
+                    <td class="text-end">
+                        + Rs {{ invoice.tax_amount|floatformat:2 }} 
+                    </td>
+                </tr>
+                <tr>    
                     <td colspan="4" class="text-end"><strong>Grand Total</strong></td>
-                    <td><strong>Rs {{ invoice.grand_total|floatformat:2 }}</strong></td>
+                    <td class="text-end fs-5 text-primary">
+                        Rs {{ invoice.grand_total|floatformat:2 }}  
+                    </td>
                 </tr>
             </tfoot>
         </table>

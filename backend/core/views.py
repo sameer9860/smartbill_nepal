@@ -13,6 +13,11 @@ from .ai import (
     get_category_sales_summary
 )
 
+def handler404(request, exception):
+    return render(request, 'core/404.html', status=404)
+
+def handler500(request):
+    return render(request, 'core/500.html', status=500)
 
 # DASHBOARD
 def dashboard(request):
@@ -195,6 +200,27 @@ def invoice_create(request):
         form = InvoiceForm(request.POST)
         formset = InvoiceItemFormSet(request.POST)
         if form.is_valid() and formset.is_valid():
+            # Validate stock before saving
+            errors = []
+            for item_form in formset:
+                if item_form.cleaned_data and not item_form.cleaned_data.get('DELETE'):
+                    product = item_form.cleaned_data.get('product')
+                    quantity = item_form.cleaned_data.get('quantity', 0)
+                    if product and quantity > product.stock_quantity:
+                        errors.append(
+                            f'Not enough stock for "{product.name}". '
+                            f'Available: {product.stock_quantity}, '
+                            f'Requested: {quantity}'
+                        )
+            if errors:
+                for error in errors:
+                    messages.error(request, error)
+                return render(request, 'core/invoice_form.html', {
+                    'form': form,
+                    'formset': formset
+                })
+
+            # Save invoice
             invoice = form.save(commit=False)
             invoice.save()
             items = formset.save(commit=False)
@@ -203,21 +229,21 @@ def invoice_create(request):
                 item.invoice = invoice
                 item.save()
                 total += item.subtotal
-                # Deduct stock
                 product = item.product
                 product.stock_quantity -= item.quantity
                 product.save()
-                # Log stock movement
                 StockMovement.objects.create(
                     product=product,
                     movement_type='OUT',
                     quantity=item.quantity,
                     reason=f'Invoice #{invoice.invoice_number}'
                 )
-            # Update total amount
             invoice.total_amount = total
             invoice.save()
-            messages.success(request, f'Invoice #{invoice.invoice_number} created!')
+            messages.success(
+                request,
+                f'Invoice #{invoice.invoice_number} created successfully!'
+            )
             return redirect('invoice_detail', pk=invoice.pk)
     else:
         form = InvoiceForm()
