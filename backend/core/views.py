@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.db.models import Sum, Count, Q, ExpressionWrapper, DecimalField, F, F as F_expr
 from django.utils import timezone
 from datetime import timedelta
+from django.contrib.auth.decorators import login_required
 from .models import Product, Customer, Invoice, InvoiceItem, StockMovement, Category
 from .forms import ProductForm, CustomerForm, InvoiceForm, InvoiceItemFormSet
 import json
@@ -20,6 +21,7 @@ def handler500(request):
     return render(request, 'core/500.html', status=500)
 
 # DASHBOARD
+@login_required
 def dashboard(request):
     # Summary stats
     total_products = Product.objects.count()
@@ -70,6 +72,7 @@ def dashboard(request):
 
 
 # PRODUCTS
+@login_required
 def product_list(request):
     search = request.GET.get('search', '')
     products = Product.objects.select_related('category').all()
@@ -83,7 +86,7 @@ def product_list(request):
         'search': search
     })
 
-
+@login_required
 def product_add(request):
     if request.method == 'POST':
         form = ProductForm(request.POST)
@@ -106,6 +109,7 @@ def product_add(request):
     })
 
 
+@login_required
 def product_edit(request, pk):
     product = get_object_or_404(Product, pk=pk)
     old_quantity = product.stock_quantity
@@ -133,6 +137,7 @@ def product_edit(request, pk):
     })
 
 
+@login_required
 def product_delete(request, pk):
     product = get_object_or_404(Product, pk=pk)
     if request.method == 'POST':
@@ -140,10 +145,15 @@ def product_delete(request, pk):
         product.delete()
         messages.success(request, f'Product "{name}" deleted!')
         return redirect('product_list')
-    return render(request, 'core/confirm_delete.html', {'object': product})
+    from django.urls import reverse
+    return render(request, 'core/confirm_delete.html', {
+        'object': product,
+        'cancel_url': reverse('product_list')
+    })
 
 
 # CUSTOMERS
+@login_required
 def customer_list(request):
     search = request.GET.get('search', '')
     customers = Customer.objects.all()
@@ -157,7 +167,7 @@ def customer_list(request):
         'search': search
     })
 
-
+@login_required
 def customer_add(request):
     if request.method == 'POST':
         form = CustomerForm(request.POST)
@@ -172,7 +182,7 @@ def customer_add(request):
         'title': 'Add Customer'
     })
 
-
+@login_required
 def customer_edit(request, pk):
     customer = get_object_or_404(Customer, pk=pk)
     if request.method == 'POST':
@@ -190,11 +200,12 @@ def customer_edit(request, pk):
 
 
 # INVOICES
+@login_required
 def invoice_list(request):
     invoices = Invoice.objects.select_related('customer').order_by('-created_at')
     return render(request, 'core/invoice_list.html', {'invoices': invoices})
 
-
+@login_required
 def invoice_create(request):
     if request.method == 'POST':
         form = InvoiceForm(request.POST)
@@ -253,7 +264,7 @@ def invoice_create(request):
         'formset': formset
     })
 
-
+@login_required
 def invoice_detail(request, pk):
     invoice = get_object_or_404(
         Invoice.objects.select_related('customer').prefetch_related('items__product'),
@@ -261,7 +272,7 @@ def invoice_detail(request, pk):
     )
     return render(request, 'core/invoice_detail.html', {'invoice': invoice})
 
-
+@login_required
 def invoice_print(request, pk):
     invoice = get_object_or_404(
         Invoice.objects.select_related('customer').prefetch_related('items__product'),
@@ -270,7 +281,23 @@ def invoice_print(request, pk):
     return render(request, 'core/invoice_print.html', {'invoice': invoice})
 
 
+@login_required
+def invoice_delete(request, pk):
+    invoice = get_object_or_404(Invoice, pk=pk)
+    if request.method == 'POST':
+        invoice_number = invoice.invoice_number
+        invoice.delete()
+        messages.success(request, f'Invoice #{invoice_number} deleted!')
+        return redirect('invoice_list')
+    from django.urls import reverse
+    return render(request, 'core/confirm_delete.html', {
+        'object': invoice,
+        'cancel_url': reverse('invoice_list')
+    })
+
+
 # LOW STOCK ALERTS
+@login_required
 def low_stock_alerts(request):
     low_stock = Product.objects.filter(
         stock_quantity__lte=F('low_stock_threshold')
@@ -279,13 +306,16 @@ def low_stock_alerts(request):
 
 
 # REPORTS
+@login_required
 def reports(request):
     # Top selling products
     revenue_expr = ExpressionWrapper(
         F_expr('unit_price') * F_expr('quantity'),
         output_field=DecimalField(max_digits=12, decimal_places=2)
     )
-    top_products = InvoiceItem.objects.values(
+    top_products = InvoiceItem.objects.filter(
+        invoice__tenant=request.tenant
+    ).values(
         'product__name'
     ).annotate(
         total_qty=Sum('quantity'),
@@ -312,6 +342,7 @@ def reports(request):
     }
     return render(request, 'core/reports.html', context)
 
+@login_required
 def ai_dashboard(request):
     """Main AI insights page."""
     low_stock_predictions = predict_low_stock()

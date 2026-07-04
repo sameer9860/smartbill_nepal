@@ -1,5 +1,6 @@
 from django import forms
 from .models import Category, Product, Customer, Invoice, InvoiceItem
+from .utils import get_current_tenant
 
 
 class CategoryForm(forms.ModelForm):
@@ -55,6 +56,13 @@ class InvoiceForm(forms.ModelForm):
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        tenant = get_current_tenant()
+        if tenant:
+            # Only show this tenant's customers in the dropdown
+            self.fields['customer'].queryset = Customer.objects.filter(tenant=tenant)
+
 
 class InvoiceItemForm(forms.ModelForm):
     class Meta:
@@ -65,6 +73,13 @@ class InvoiceItemForm(forms.ModelForm):
             'quantity': forms.NumberInput(attrs={'class': 'form-control'}),
             'unit_price': forms.NumberInput(attrs={'class': 'form-control'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        tenant = get_current_tenant()
+        if tenant:
+            # Only show this tenant's products in the dropdown
+            self.fields['product'].queryset = Product.objects.filter(tenant=tenant)
 
 
 # Formset for multiple invoice items

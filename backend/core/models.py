@@ -1,10 +1,55 @@
 from django.db import models
 from django.utils import timezone
+from django.contrib.auth.models import User
 from .utils import generate_invoice_number
 
 
+# Tenant (Store) Model
+class Tenant(models.Model):
+    name = models.CharField(max_length=200)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+
+# User Profile Model
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    tenant = models.ForeignKey(Tenant, on_delete=models.SET_NULL, null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.user.username}'s Profile"
+
+
+# Tenant Manager
+class TenantManager(models.Manager):
+    def get_queryset(self):
+        from .utils import get_current_tenant
+        tenant = get_current_tenant()
+        if tenant:
+            return super().get_queryset().filter(tenant=tenant)
+        return super().get_queryset()
+
+
+# Abstract Tenant Model Base Class
+class TenantModel(models.Model):
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, null=True, blank=True)
+    
+    objects = TenantManager()
+
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        if not self.tenant:
+            from .utils import get_current_tenant
+            self.tenant = get_current_tenant()
+        super().save(*args, **kwargs)
+
+
 # Category for products
-class Category(models.Model):
+class Category(TenantModel):
     name = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -16,7 +61,7 @@ class Category(models.Model):
 
 
 # Product / Inventory
-class Product(models.Model):
+class Product(TenantModel):
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,
@@ -40,7 +85,7 @@ class Product(models.Model):
 
 
 # Customer
-class Customer(models.Model):
+class Customer(TenantModel):
     full_name = models.CharField(max_length=200)
     email = models.EmailField(blank=True, null=True)
     phone = models.CharField(max_length=20)
@@ -53,9 +98,7 @@ class Customer(models.Model):
 
 
 # Invoice (Bill)
-# core/models.py — update Invoice model
-
-class Invoice(models.Model):
+class Invoice(TenantModel):
     STATUS_CHOICES = [
         ('PAID', 'Paid'),
         ('UNPAID', 'Unpaid'),
@@ -68,7 +111,6 @@ class Invoice(models.Model):
     )
     invoice_number = models.CharField(
         max_length=50,
-        unique=True,
         blank=True
     )
     status = models.CharField(
@@ -95,6 +137,11 @@ class Invoice(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['tenant', 'invoice_number'], name='unique_tenant_invoice_number')
+        ]
+
     def __str__(self):
         return f"Invoice #{self.invoice_number} - {self.customer.full_name}"
 
@@ -113,10 +160,14 @@ class Invoice(models.Model):
         )
 
     def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
+        # Auto-assign tenant if missing
+        if not self.tenant:
+            from .utils import get_current_tenant
+            self.tenant = get_current_tenant()
+        # Generate invoice number before saving if not already set
         if not self.invoice_number:
-            self.invoice_number = generate_invoice_number(self.pk)
-            super().save(*args, **kwargs)
+            self.invoice_number = generate_invoice_number(tenant=self.tenant)
+        super().save(*args, **kwargs)
 
 
 # Invoice Line Items
@@ -145,7 +196,7 @@ class InvoiceItem(models.Model):
 
 
 # Stock Movement Log
-class StockMovement(models.Model):
+class StockMovement(TenantModel):
     MOVEMENT_TYPES = [
         ('IN', 'Stock In'),
         ('OUT', 'Stock Out'),
@@ -165,3 +216,14 @@ class StockMovement(models.Model):
 
     def __str__(self):
         return f"{self.movement_type} - {self.product.name} ({self.quantity})"
+
+
+# Signals to auto-create profile and default tenant for new users
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        tenant = Tenant.objects.create(name=f"{instance.username}'s Store")
+        UserProfile.objects.create(user=instance, tenant=tenant)

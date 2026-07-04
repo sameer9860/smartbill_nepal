@@ -6,6 +6,7 @@ from django.utils import timezone
 from datetime import timedelta
 from .models import Product, InvoiceItem, Invoice
 from django.db.models import Sum
+from .utils import get_current_tenant
 
 
 
@@ -20,12 +21,14 @@ def predict_low_stock():
     results = []
     products = Product.objects.all()
 
+    tenant = get_current_tenant()
     for product in products:
         # Get sales in last 30 days
         thirty_days_ago = timezone.now() - timedelta(days=30)
         items = InvoiceItem.objects.filter(
             product=product,
-            invoice__created_at__gte=thirty_days_ago
+            invoice__created_at__gte=thirty_days_ago,
+            invoice__tenant=tenant
         )
 
         total_sold = sum(item.quantity for item in items)
@@ -120,12 +123,14 @@ def get_product_recommendations():
     recommendations = []
     products = Product.objects.all()
 
+    tenant = get_current_tenant()
     for product in products:
         # Sales in last 30 days
         thirty_days_ago = timezone.now() - timedelta(days=30)
         items = InvoiceItem.objects.filter(
             product=product,
-            invoice__created_at__gte=thirty_days_ago
+            invoice__created_at__gte=thirty_days_ago,
+            invoice__tenant=tenant
         )
         total_sold = sum(item.quantity for item in items)
         revenue_generated = sum(
@@ -155,8 +160,10 @@ def get_category_sales_summary():
     for the last 30 days.
     """
     thirty_days_ago = timezone.now() - timedelta(days=30)
+    tenant = get_current_tenant()
     items = InvoiceItem.objects.filter(
-        invoice__created_at__gte=thirty_days_ago
+        invoice__created_at__gte=thirty_days_ago,
+        invoice__tenant=tenant
     ).select_related('product__category')
 
     category_data = {}

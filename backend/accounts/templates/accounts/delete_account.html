@@ -1,0 +1,70 @@
+{% extends 'core/base.html' %}
+
+{% block title %}- Delete Account{% endblock %}
+{% block page_title %}Delete Account{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+
+    <div class="col-md-6">
+
+        <div class="card border-danger shadow">
+
+            <div class="card-header bg-danger text-white">
+
+                <i class="fa fa-triangle-exclamation"></i>
+
+                Confirm Account Deletion
+
+            </div>
+
+            <div class="card-body">
+
+                <h4 class="text-danger">
+                    Are you sure?
+                </h4>
+
+                <p>
+                    You are about to permanently delete your account.
+                </p>
+
+                <p class="fw-bold text-danger">
+                    This action cannot be undone.
+                </p>
+
+                <hr>
+
+                <form method="post">
+
+                    {% csrf_token %}
+
+                    <button
+                        type="submit"
+                        class="btn btn-danger">
+
+                        <i class="fa fa-trash"></i>
+
+                        Yes, Delete My Account
+
+                    </button>
+
+                    <a
+                        href="{% url 'accounts:change_password' %}"
+                        class="btn btn-secondary">
+
+                        Cancel
+
+                    </a>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

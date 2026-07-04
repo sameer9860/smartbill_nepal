@@ -136,6 +136,13 @@
                         <a href="{% url 'invoice_detail' invoice.pk %}" class="btn btn-sm btn-outline-primary">
                             <i class="bi bi-eye"></i>
                         </a>
+                        <a href="{% url 'invoice_print' invoice.pk %}" class="btn btn-sm btn-outline-secondary"
+                            target="_blank">
+                            <i class="bi bi-printer"></i>
+                        </a>
+                        <a href="{% url 'invoice_delete' invoice.pk %}" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-trash"></i>
+                        </a>
                     </td>
                 </tr>
                 {% empty %}

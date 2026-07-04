@@ -72,8 +72,7 @@
                     </thead>
                     <tbody>
                         {% for item in low_stock_predictions %}
-                        {% if item.days_until_stockout < 999 %}
-                        <tr>
+                        {% if item.days_until_stockout < 999 %} <tr>
                             <td><strong>{{ item.product.name }}</strong></td>
                             <td>{{ item.product.stock_quantity }}</td>
                             <td>{{ item.avg_daily_sales }}</td>
@@ -99,15 +98,15 @@
                                     +{{ item.recommended_restock }}
                                 </span>
                             </td>
-                        </tr>
-                        {% endif %}
-                        {% empty %}
-                        <tr>
-                            <td colspan="6" class="text-center text-muted py-3">
-                                No sales data available yet
-                            </td>
-                        </tr>
-                        {% endfor %}
+                            </tr>
+                            {% endif %}
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-3">
+                                    No sales data available yet
+                                </td>
+                            </tr>
+                            {% endfor %}
                     </tbody>
                 </table>
             </div>
@@ -181,45 +180,45 @@
 
 {% block extra_js %}
 <script>
-{% if forecast %}
-// Sales Forecast Chart
-const forecastCtx = document.getElementById('forecastChart').getContext('2d');
-new Chart(forecastCtx, {
-    type: 'line',
-    data: {
-        labels: [
-            ...{{ forecast.historical_labels|safe }},
-            ...{{ forecast.forecast_labels|safe }}
+    {% if forecast %}
+    // Sales Forecast Chart
+    const forecastCtx = document.getElementById('forecastChart').getContext('2d');
+    new Chart(forecastCtx, {
+        type: 'line',
+        data: {
+            labels: [
+                ...{{ forecast.historical_labels | safe }},
+        ...{{ forecast.forecast_labels | safe }}
         ],
         datasets: [
-            {
-                label: 'Actual Revenue',
-                data: [
-                    ...{{ forecast.historical_data|safe }},
-                    ...Array({{ forecast.forecast_labels|length }}).fill(null)
-                ],
-                borderColor: 'rgba(26, 35, 126, 1)',
-                backgroundColor: 'rgba(26, 35, 126, 0.1)',
-                fill: true,
-                tension: 0.4,
+        {
+            label: 'Actual Revenue',
+            data: [
+                ...{{ forecast.historical_data | safe }},
+        ...Array({{ forecast.forecast_labels | length }}).fill(null)
+    ],
+        borderColor: 'rgba(26, 35, 126, 1)',
+        backgroundColor: 'rgba(26, 35, 126, 0.1)',
+        fill: true,
+        tension: 0.4,
             },
-            {
-                label: 'Forecasted Revenue',
-                data: [
-                    ...Array({{ forecast.historical_labels|length }}).fill(null),
-                    ...{{ forecast.forecast_data|safe }}
+        {
+            label: 'Forecasted Revenue',
+            data: [
+                ...Array({{ forecast.historical_labels | length }}).fill(null),
+                    ...{ { forecast.forecast_data | safe } }
                 ],
-                borderColor: 'rgba(76, 175, 80, 1)',
-                backgroundColor: 'rgba(76, 175, 80, 0.1)',
-                borderDash: [5, 5],
+    borderColor: 'rgba(76, 175, 80, 1)',
+        backgroundColor: 'rgba(76, 175, 80, 0.1)',
+            borderDash: [5, 5],
                 fill: true,
-                tension: 0.4,
+                    tension: 0.4,
             }
         ]
     },
     options: {
         responsive: true,
-        interaction: { intersect: false, mode: 'index' },
+            interaction: { intersect: false, mode: 'index' },
         plugins: {
             legend: { position: 'top' },
             tooltip: {
@@ -233,23 +232,23 @@ new Chart(forecastCtx, {
         }
     }
 });
-{% endif %}
+    {% endif %}
 
-// Category Pie Chart
-const catCtx = document.getElementById('categoryChart').getContext('2d');
-new Chart(catCtx, {
-    type: 'doughnut',
-    data: {
-        labels: {{ cat_labels|safe }},
+    // Category Pie Chart
+    const catCtx = document.getElementById('categoryChart').getContext('2d');
+    new Chart(catCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ cat_labels| safe }},
         datasets: [{
-            data: {{ cat_data|safe }},
-            backgroundColor: [
-                '#1a237e', '#e53935', '#4caf50',
-                '#ff9800', '#9c27b0', '#00bcd4'
-            ],
+            data: {{ cat_data| safe }},
+        backgroundColor: [
+            '#1a237e', '#e53935', '#4caf50',
+            '#ff9800', '#9c27b0', '#00bcd4'
+        ],
         }]
     },
-    options: {
+        options: {
         responsive: true,
         plugins: {
             legend: { position: 'bottom' }

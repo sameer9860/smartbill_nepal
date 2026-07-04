@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +9,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <style>
         :root {
             --primary: #1a237e;
@@ -15,10 +18,12 @@
             --accent: #e53935;
             --light-bg: #f5f6fa;
         }
+
         body {
             background-color: var(--light-bg);
             font-family: 'Segoe UI', sans-serif;
         }
+
         .sidebar {
             min-height: 100vh;
             background: linear-gradient(180deg, var(--primary), var(--secondary));
@@ -29,59 +34,69 @@
             z-index: 100;
             padding-top: 20px;
         }
+
         .sidebar .brand {
             color: white;
             font-size: 1.3rem;
             font-weight: 700;
             padding: 15px 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             margin-bottom: 10px;
         }
+
         .sidebar .brand span {
             color: #ffeb3b;
         }
+
         .sidebar .nav-link {
-            color: rgba(255,255,255,0.8);
+            color: rgba(255, 255, 255, 0.8);
             padding: 10px 20px;
             border-radius: 8px;
             margin: 2px 10px;
             transition: all 0.2s;
         }
+
         .sidebar .nav-link:hover,
         .sidebar .nav-link.active {
-            background: rgba(255,255,255,0.15);
+            background: rgba(255, 255, 255, 0.15);
             color: white;
         }
+
         .sidebar .nav-link i {
             width: 20px;
             margin-right: 8px;
         }
+
         .main-content {
             margin-left: 250px;
             padding: 25px;
             min-height: 100vh;
         }
+
         .topbar {
             background: white;
             padding: 15px 25px;
             border-radius: 12px;
             margin-bottom: 25px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
+
         .stat-card {
             background: white;
             border-radius: 12px;
             padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
             border-left: 4px solid var(--primary);
             transition: transform 0.2s;
         }
+
         .stat-card:hover {
             transform: translateY(-3px);
         }
+
         .stat-card .stat-icon {
             width: 50px;
             height: 50px;
@@ -91,11 +106,13 @@
             justify-content: center;
             font-size: 1.4rem;
         }
+
         .card {
             border: none;
             border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
+
         .card-header {
             background: white;
             border-bottom: 1px solid #f0f0f0;
@@ -103,17 +120,29 @@
             padding: 15px 20px;
             font-weight: 600;
         }
+
         .btn-primary {
             background: var(--primary);
             border-color: var(--primary);
         }
+
         .btn-primary:hover {
             background: var(--secondary);
             border-color: var(--secondary);
         }
-        .badge-paid { background-color: #4caf50; }
-        .badge-unpaid { background-color: #f44336; }
-        .badge-partial { background-color: #ff9800; }
+
+        .badge-paid {
+            background-color: #4caf50;
+        }
+
+        .badge-unpaid {
+            background-color: #f44336;
+        }
+
+        .badge-partial {
+            background-color: #ff9800;
+        }
+
         .low-stock-badge {
             background: #ffebee;
             color: #c62828;
@@ -122,6 +151,7 @@
             font-size: 0.75rem;
             font-weight: 600;
         }
+
         .table th {
             background: #f8f9fa;
             font-weight: 600;
@@ -129,80 +159,156 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
+
         @media print {
-            .sidebar, .topbar, .no-print { display: none !important; }
-            .main-content { margin-left: 0; }
+
+            .sidebar,
+            .topbar,
+            .no-print {
+                display: none !important;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
         }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
+
 <body>
 
-<!-- Sidebar -->
-<div class="sidebar">
-    <div class="brand">
-        <i class="bi bi-receipt"></i> SmartBill <span>Nepal</span>
-    </div>
-    <nav class="nav flex-column mt-2">
-        <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-            <i class="bi bi-speedometer2"></i> Dashboard
-        </a>
-        <a href="{% url 'product_list' %}" class="nav-link {% if 'product' in request.resolver_match.url_name %}active{% endif %}">
-            <i class="bi bi-box-seam"></i> Products
-        </a>
-        <a href="{% url 'customer_list' %}" class="nav-link {% if 'customer' in request.resolver_match.url_name %}active{% endif %}">
-            <i class="bi bi-people"></i> Customers
-        </a>
-        <a href="{% url 'invoice_list' %}" class="nav-link {% if 'invoice' in request.resolver_match.url_name %}active{% endif %}">
-            <i class="bi bi-file-earmark-text"></i> Invoices
-        </a>
-        <a href="{% url 'low_stock_alerts' %}" class="nav-link {% if request.resolver_match.url_name == 'low_stock_alerts' %}active{% endif %}">
-            <i class="bi bi-exclamation-triangle"></i> Low Stock
-        </a>
-        <a href="{% url 'reports' %}" class="nav-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
-            <i class="bi bi-bar-chart"></i> Reports
-        </a>
-        <a href="{% url 'ai_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'ai_dashboard' %}active{% endif %}">
-            <i class="bi bi-robot"></i> AI Insights
-        </a>
-    </nav>
-</div>
-
-<!-- Main Content -->
-<div class="main-content">
-    <!-- Topbar -->
-    <div class="topbar">
-        <h5 class="mb-0 fw-bold">{% block page_title %}SmartBill Nepal{% endblock %}</h5>
-        <div class="d-flex align-items-center gap-3">
-            {% if low_stock_count %}
-            <a href="{% url 'low_stock_alerts' %}" class="text-decoration-none">
-                <span class="low-stock-badge">
-                    <i class="bi bi-exclamation-triangle"></i>
-                    {{ low_stock_count }} Low Stock
-                </span>
-            </a>
-            {% endif %}
-            <span class="text-muted small">{{ request.user }}</span>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="brand">
+            <i class="bi bi-receipt"></i> SmartBill <span>Nepal</span>
         </div>
+        <nav class="nav flex-column mt-2">
+            <a href="{% url 'dashboard' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <i class="bi bi-speedometer2"></i> Dashboard
+            </a>
+            <a href="{% url 'product_list' %}"
+                class="nav-link {% if 'product' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-box-seam"></i> Products
+            </a>
+            <a href="{% url 'customer_list' %}"
+                class="nav-link {% if 'customer' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-people"></i> Customers
+            </a>
+            <a href="{% url 'invoice_list' %}"
+                class="nav-link {% if 'invoice' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-file-earmark-text"></i> Invoices
+            </a>
+            <a href="{% url 'low_stock_alerts' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'low_stock_alerts' %}active{% endif %}">
+                <i class="bi bi-exclamation-triangle"></i> Low Stock
+            </a>
+            <a href="{% url 'reports' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
+                <i class="bi bi-bar-chart"></i> Reports
+            </a>
+            <a href="{% url 'ai_dashboard' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'ai_dashboard' %}active{% endif %}">
+                <i class="bi bi-robot"></i> AI Insights
+            </a>
+            <a href="{% url 'accounts:change_password' %}"
+                class="nav-link {% if request.resolver_match.url_name == 'change_password' %}active{% endif %}">
+                <i class="bi bi-gear"></i> Settings
+            </a>
+            <a href="{% url 'accounts:logout' %}" onclick="return confirm('Are you sure you want to logout?')"
+                class="nav-link {% if request.resolver_match.url_name == 'logout' %}active{% endif %}">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+        </nav>
     </div>
 
-    <!-- Messages -->
-    {% if messages %}
-    {% for message in messages %}
-    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-        {{ message }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Topbar -->
+        <div class="topbar">
+            <h5 class="mb-0 fw-bold">{% block page_title %}SmartBill Nepal{% endblock %}</h5>
+            <div class="d-flex align-items-center gap-3">
+                {% if low_stock_count %}
+                <a href="{% url 'low_stock_alerts' %}" class="text-decoration-none">
+                    <span class="low-stock-badge">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        {{ low_stock_count }} Low Stock
+                    </span>
+                </a>
+                {% endif %}
+
+                <!-- Profile Dropdown -->
+                <div class="dropdown">
+                    <a href="#" class="d-flex align-items-center gap-2 text-decoration-none dropdown-toggle text-dark"
+                        id="userProfileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div style="
+                            width: 36px; height: 36px;
+                            background: var(--primary);
+                            color: white;
+                            border-radius: 50%;
+                            display: flex; align-items: center;
+                            justify-content: center;
+                            font-weight: 700; font-size: 0.95rem;
+                            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+                            {{ request.user.username|first|upper }}
+                        </div>
+                        <span class="fw-semibold d-none d-sm-inline">
+                            {{ request.user.get_full_name|default:request.user.username }}
+                        </span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end border-0 shadow mt-2"
+                        aria-labelledby="userProfileDropdown" style="border-radius: 8px;">
+                        <li>
+                            <div class="px-3 py-2 border-bottom">
+                                <div class="fw-bold text-dark small">{{request.user.get_full_name|default:request.user.username }}</div>
+                                <div class="text-muted small">@{{ request.user.username }}</div>
+                            </div>
+                        </li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center gap-2 py-2" href="{% url 'dashboard' %}">
+                                <i class="bi bi-speedometer2 text-primary"></i> Dashboard
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center gap-2 py-2"
+                                href="{% url 'accounts:profile' %}">
+                                <i class="bi bi-person text-primary"></i> Profile
+                            </a>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center gap-2 py-2 text-danger"
+                                href="{% url 'accounts:logout' %}"
+                                onclick="return confirm('Are you sure you want to logout?')">
+                                <i class="bi bi-box-arrow-right"></i> Logout
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
     </div>
-    {% endfor %}
-    {% endif %}
 
-    {% block content %}{% endblock %}
-</div>
-
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-{% block extra_js %}{% endblock %}
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% block extra_js %}{% endblock %}
 </body>
+
 </html>

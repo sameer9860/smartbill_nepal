@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartBill Nepal — Login</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1a237e 0%, #283593 50%, #1565c0 100%);
+      align-items: center;
+      justify-content: center;
+    }
+    .login-box {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+      padding: 40px 35px;
+      width: 100%;
+      max-width: 400px;
+      position: relative;
+    }
+    .login-box h4 {
+      font-weight: 700;
+      color: #1a237e;
+      margin-bottom: 5px;
+    }
+    .login-box p {
+      color: #888;
+      font-size: 0.9rem;
+      margin-bottom: 25px;
+    }
+    .form-floating label {
+      color: #555;
+      font-weight: 500;
+    }
+    .form-control {
+      padding: 12px;
+    }
+    .btn-login {
+      background: linear-gradient(135deg, #1a237e, #1565c0);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 13px;
+      font-weight: 600;
+      width: 100%;
+      font-size: 1rem;
+      margin-top: 15px;
+      transition: all 0.2s;
+    }
+    .btn-login:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+      color: white;
+    }
+    .password-toggle {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #666;
+    }
+    .footer-note {
+      text-align: center;
+      color: #aaa;
+      font-size: 0.8rem;
+      margin-top: 25px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-box">
+  <h4>Welcome Back 👋</h4>
+  <p>Sign in to your SmartBill Nepal account</p>
+
+  {% if messages %}
+  {% for message in messages %}
+  <div class="alert alert-danger alert-dismissible fade show py-2" role="alert">
+    <i class="fa fa-exclamation-circle"></i> {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <div class="form-floating mb-3">
+      {{ form.username }}
+      <label for="id_username">Username</label>
+    </div>
+    <div class="form-floating mb-3 position-relative">
+      {{ form.password }}
+      <label for="id_password">Password</label>
+      <i class="fa fa-eye-slash password-toggle" id="togglePassword"></i>
+    </div>
+    <button type="submit" class="btn-login">
+      <i class="fa fa-sign-in-alt"></i> Sign In
+    </button>
+  </form>
+
+  <div class="footer-note">
+    © 2026 SmartBill Nepal — Dlytica Academy Project<br>
+    Samir Khatiwada
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const togglePassword = document.querySelector("#togglePassword");
+  const passwordField = document.querySelector("#id_password");
+
+  togglePassword.addEventListener("click", function () {
+    const type = passwordField.getAttribute("type") === "password" ? "text" : "password";
+    passwordField.setAttribute("type", type);
+    this.classList.toggle("fa-eye");
+    this.classList.toggle("fa-eye-slash");
+  });
+</script>
+</body>
+</html>
