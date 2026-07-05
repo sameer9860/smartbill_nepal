@@ -1,3 +1,4 @@
+<!-- core/templates/core/invoice_form.html -->
 {% extends 'core/base.html' %}
 {% block title %}- Create Invoice{% endblock %}
 {% block page_title %}Create Invoice{% endblock %}
@@ -5,32 +6,121 @@
 {% block content %}
 <div class="card">
     <div class="card-header">
-        <i class="bi bi-file-earmark-plus text-primary"></i> Create New Invoice
+        <i class="bi bi-file-earmark-plus text-primary"></i>
+        Create New Invoice
     </div>
     <div class="card-body">
-        <form method="post">
+        <form method="post" id="invoiceForm">
             {% csrf_token %}
-            <div class="row g-3 mb-4">
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">Customer</label>
-                    {{ form.customer }}
+
+            <!-- ── Customer Section ── -->
+            <div class="card mb-4 border-primary">
+                <div class="card-header bg-primary bg-opacity-10">
+                    <strong>
+                        <i class="bi bi-person"></i> Customer
+                    </strong>
                 </div>
-                <div class="col-md-2">
+                <div class="card-body">
+
+                    <!-- Customer Type Toggle -->
+                    <div class="mb-3">
+                        <div class="d-flex gap-4">
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                    type="radio"
+                                    name="customer_type"
+                                    id="type_existing"
+                                    value="existing" checked>
+                                <label class="form-check-label fw-semibold"
+                                    for="type_existing">
+                                    <i class="bi bi-person-check text-primary"></i>
+                                    Existing Customer
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                    type="radio"
+                                    name="customer_type"
+                                    id="type_walkin"
+                                    value="walkin">
+                                <label class="form-check-label fw-semibold"
+                                    for="type_walkin">
+                                    <i class="bi bi-person-walking text-warning"></i>
+                                    Walk-in Customer
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Existing Customer Dropdown -->
+                    <div id="existingCustomerSection">
+                        <label class="form-label fw-semibold">
+                            Select Customer
+                        </label>
+                        {{ form.customer }}
+
+                        <!-- Quick search hint -->
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle"></i>
+                            Customer not in list?
+                            Switch to Walk-in Customer above.
+                        </small>
+                    </div>
+
+                    <!-- Walk-in Customer Fields -->
+                    <div id="walkinCustomerSection" style="display:none;">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">
+                                    Customer Name
+                                    <span class="text-danger">*</span>
+                                </label>
+                                {{ form.walkin_name }}
+                                <small class="text-muted">
+                                    <i class="bi bi-info-circle"></i>
+                                    If this customer visited before,
+                                    they will be auto-matched.
+                                </small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">
+                                    Phone Number
+                                    <span class="text-muted">(Optional)</span>
+                                </label>
+                                {{ form.walkin_phone }}
+                                <small class="text-muted">
+                                    Helps match returning customers.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ── Invoice Details ── -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
                     <label class="form-label fw-semibold">Status</label>
                     {{ form.status }}
                 </div>
-                <div class="col-md-2">
-                    <label class="form-label fw-semibold">Discount (%)</label>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">
+                        Discount (%)
+                    </label>
                     {{ form.discount }}
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <label class="form-label fw-semibold">Tax (%)</label>
                     {{ form.tax }}
                 </div>
             </div>
 
-            <!-- Invoice Items -->
-            <h6 class="fw-bold mb-3">Invoice Items</h6>
+            <!-- ── Invoice Items ── -->
+            <h6 class="fw-bold mb-3">
+                <i class="bi bi-cart3 text-primary"></i>
+                Invoice Items
+            </h6>
             {{ formset.management_form }}
             <table class="table" id="items-table">
                 <thead>
@@ -48,25 +138,51 @@
                         <td>{{ item_form.product }}</td>
                         <td>{{ item_form.quantity }}</td>
                         <td>{{ item_form.unit_price }}</td>
-                        <td><span class="subtotal fw-bold text-primary">Rs 0.00</span></td>
+                        <td>
+                            <span class="subtotal fw-bold text-primary">
+                                Rs 0.00
+                            </span>
+                        </td>
                         <td>{{ item_form.DELETE }}</td>
-                        {% for hidden in item_form.hidden_fields %}{{ hidden }}{% endfor %}
+                        {% for hidden in item_form.hidden_fields %}
+                            {{ hidden }}
+                        {% endfor %}
                     </tr>
                     {% endfor %}
                 </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3" class="text-end fw-bold">
+                            Total
+                        </td>
+                        <td>
+                            <span id="grandTotal"
+                                class="fw-bold text-primary fs-5">
+                                Rs 0.00
+                            </span>
+                        </td>
+                        <td></td>
+                    </tr>
+                </tfoot>
             </table>
 
+            <!-- Notes -->
             <div class="mb-3">
                 <label class="form-label fw-semibold">Notes</label>
                 {{ form.notes }}
             </div>
 
+            <!-- Submit -->
             <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-primary">
+                <button type="submit" class="btn btn-primary px-4">
                     <i class="bi bi-check-lg"></i> Create Invoice
                 </button>
-                <a href="{% url 'invoice_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                <a href="{% url 'invoice_list' %}"
+                    class="btn btn-outline-secondary">
+                    Cancel
+                </a>
             </div>
+
         </form>
     </div>
 </div>
@@ -74,18 +190,80 @@
 
 {% block extra_js %}
 <script>
-// Auto-calculate subtotal per row
-document.querySelectorAll('.item-row').forEach(row => {
-    const qty = row.querySelector('input[name*="quantity"]');
-    const price = row.querySelector('input[name*="unit_price"]');
-    const subtotal = row.querySelector('.subtotal');
-    function calc() {
-        const q = parseFloat(qty.value) || 0;
-        const p = parseFloat(price.value) || 0;
-        subtotal.textContent = 'Rs ' + (q * p).toFixed(2);
-    }
-    qty.addEventListener('input', calc);
-    price.addEventListener('input', calc);
+// ── Toggle Customer Type
+const existingSection = document.getElementById('existingCustomerSection');
+const walkinSection = document.getElementById('walkinCustomerSection');
+const radios = document.querySelectorAll('input[name="customer_type"]');
+
+radios.forEach(radio => {
+    radio.addEventListener('change', function() {
+        if (this.value === 'existing') {
+            existingSection.style.display = 'block';
+            walkinSection.style.display = 'none';
+        } else {
+            existingSection.style.display = 'none';
+            walkinSection.style.display = 'block';
+        }
+    });
 });
+
+// Restore state on form error reload
+document.addEventListener('DOMContentLoaded', function() {
+    const selected = document.querySelector(
+        'input[name="customer_type"]:checked'
+    );
+    if (selected && selected.value === 'walkin') {
+        existingSection.style.display = 'none';
+        walkinSection.style.display = 'block';
+    }
+});
+
+// ── Auto-fill unit price when product selected
+document.querySelectorAll('.item-row').forEach(row => {
+    const productSelect = row.querySelector('select[name*="product"]');
+    const qtyInput = row.querySelector('input[name*="quantity"]');
+    const priceInput = row.querySelector('input[name*="unit_price"]');
+    const subtotalSpan = row.querySelector('.subtotal');
+
+    // Product prices from Django
+    const productPrices = {
+        {% for product in products %}
+        '{{ product.pk }}': {{ product.price }},
+        {% endfor %}
+    };
+
+    function calcSubtotal() {
+        const q = parseFloat(qtyInput.value) || 0;
+        const p = parseFloat(priceInput.value) || 0;
+        subtotalSpan.textContent = 'Rs ' + (q * p).toFixed(2);
+        updateGrandTotal();
+    }
+
+    if (productSelect) {
+        productSelect.addEventListener('change', function() {
+            const price = productPrices[this.value];
+            if (price) {
+                priceInput.value = price;
+                calcSubtotal();
+            }
+        });
+    }
+
+    if (qtyInput) qtyInput.addEventListener('input', calcSubtotal);
+    if (priceInput) priceInput.addEventListener('input', calcSubtotal);
+});
+
+// ── Grand Total Calculator
+function updateGrandTotal() {
+    let total = 0;
+    document.querySelectorAll('.subtotal').forEach(span => {
+        const val = parseFloat(
+            span.textContent.replace('Rs ', '')
+        ) || 0;
+        total += val;
+    });
+    document.getElementById('grandTotal').textContent =
+        'Rs ' + total.toFixed(2);
+}
 </script>
 {% endblock %}

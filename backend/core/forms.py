@@ -31,6 +31,12 @@ class ProductForm(forms.ModelForm):
             'low_stock_threshold': forms.NumberInput(attrs={'class': 'form-control'}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        tenant = get_current_tenant()
+        if tenant:
+            self.fields['category'].queryset = Category.objects.filter(tenant=tenant)
+
 
 class CustomerForm(forms.ModelForm):
     class Meta:
@@ -44,24 +50,80 @@ class CustomerForm(forms.ModelForm):
         }
 
 
+# core/forms.py — update InvoiceForm
+
 class InvoiceForm(forms.ModelForm):
+    # Walk-in customer fields
+    customer_type = forms.ChoiceField(
+        choices=[
+            ('existing', 'Existing Customer'),
+            ('walkin', 'Walk-in Customer'),
+        ],
+        widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
+        initial='existing',
+        required=True,
+    )
+    walkin_name = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter customer name',
+        })
+    )
+    walkin_phone = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Phone number (optional)',
+        })
+    )
+
     class Meta:
         model = Invoice
-        fields = ['customer', 'status', 'discount', 'tax', 'notes']
+        fields = [
+            'customer_type',
+            'walkin_name',
+            'walkin_phone',
+            'customer',
+            'status',
+            'discount',
+            'tax',
+            'notes'
+        ]
         widgets = {
             'customer': forms.Select(attrs={'class': 'form-control'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
             'discount': forms.NumberInput(attrs={'class': 'form-control'}),
             'tax': forms.NumberInput(attrs={'class': 'form-control'}),
-            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control', 'rows': 2
+            }),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['customer'].required = False
+        self.fields['customer'].empty_label = '-- Select Existing Customer --'
         tenant = get_current_tenant()
         if tenant:
             # Only show this tenant's customers in the dropdown
             self.fields['customer'].queryset = Customer.objects.filter(tenant=tenant)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        customer_type = cleaned_data.get('customer_type')
+
+        if customer_type == 'existing':
+            if not cleaned_data.get('customer'):
+                raise forms.ValidationError(
+                    'Please select an existing customer.'
+                )
+        elif customer_type == 'walkin':
+            if not cleaned_data.get('walkin_name'):
+                raise forms.ValidationError(
+                    'Please enter the walk-in customer name.'
+                )
+        return cleaned_data
 
 
 class InvoiceItemForm(forms.ModelForm):
