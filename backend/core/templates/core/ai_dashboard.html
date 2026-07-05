@@ -1,173 +1,555 @@
 <!-- core/templates/core/ai_dashboard.html -->
 {% extends 'core/base.html' %}
 {% block title %}- AI Insights{% endblock %}
-{% block page_title %}AI Insights & Predictions{% endblock %}
+{% block page_title %}AI Insights & Business Intelligence{% endblock %}
+
+{% block extra_css %}
+<style>
+    .health-circle {
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        border: 8px solid;
+        transition: all 0.3s;
+    }
+    .health-circle.success { border-color: #4caf50; background: #f1f8e9; }
+    .health-circle.primary { border-color: #1a237e; background: #e8eaf6; }
+    .health-circle.warning { border-color: #ff9800; background: #fff8e1; }
+    .health-circle.danger  { border-color: #f44336; background: #ffebee; }
+    .health-score { font-size: 2.2rem; font-weight: 800; line-height: 1; }
+    .metric-bar {
+        height: 8px;
+        border-radius: 4px;
+        background: #e0e0e0;
+        overflow: hidden;
+        margin-top: 5px;
+    }
+    .metric-bar-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 1s ease;
+    }
+    .abc-badge-a {
+        background: #1a237e; color: white;
+        padding: 2px 10px; border-radius: 20px;
+        font-size: 0.75rem; font-weight: 700;
+    }
+    .abc-badge-b {
+        background: #ff9800; color: white;
+        padding: 2px 10px; border-radius: 20px;
+        font-size: 0.75rem; font-weight: 700;
+    }
+    .abc-badge-c {
+        background: #9e9e9e; color: white;
+        padding: 2px 10px; border-radius: 20px;
+        font-size: 0.75rem; font-weight: 700;
+    }
+    .trend-up { color: #4caf50; font-weight: 700; }
+    .trend-down { color: #f44336; font-weight: 700; }
+    .trend-stable { color: #ff9800; font-weight: 700; }
+    .order-urgent {
+        background: #fff3e0;
+        border-left: 4px solid #ff9800;
+    }
+    .section-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #1a237e;
+        margin-bottom: 0;
+    }
+    .ai-tag {
+        background: linear-gradient(135deg, #1a237e, #1565c0);
+        color: white;
+        font-size: 0.7rem;
+        padding: 2px 8px;
+        border-radius: 20px;
+        font-weight: 600;
+        margin-left: 8px;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 
-<!-- Summary Cards -->
-<div class="row g-4 mb-4">
-    <div class="col-md-4">
-        <div class="stat-card" style="border-left-color: #e53935">
-            <p class="text-muted small mb-1">Critical Stock Alerts</p>
-            <h3 class="fw-bold text-danger">
-                {{ low_stock_predictions|length }}
-            </h3>
-            <small class="text-muted">Products need attention</small>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="stat-card" style="border-left-color: #4caf50">
-            <p class="text-muted small mb-1">30-Day Revenue Forecast</p>
-            <h3 class="fw-bold text-success">
-                Rs {% if forecast %}{{ forecast.total_forecast }}{% else %}0{% endif %}
-            </h3>
-            <small class="text-muted">Predicted next 30 days</small>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="stat-card" style="border-left-color: #ff9800">
-            <p class="text-muted small mb-1">Avg Daily Forecast</p>
-            <h3 class="fw-bold text-warning">
-                Rs {% if forecast %}{{ forecast.avg_daily_forecast }}{% else %}0{% endif %}
-            </h3>
-            <small class="text-muted">Per day revenue estimate</small>
-        </div>
-    </div>
-</div>
-
-<!-- Sales Forecast Chart -->
-{% if forecast %}
-<div class="card mb-4">
-    <div class="card-header">
-        <i class="bi bi-graph-up text-success"></i>
-        Sales Forecast — Next 30 Days (Linear Regression)
-    </div>
-    <div class="card-body">
-        <canvas id="forecastChart" height="80"></canvas>
-    </div>
-</div>
-{% endif %}
-
+<!-- ─── ROW 1: Business Health Score + Summary Cards ─── -->
 <div class="row g-4 mb-4">
 
-    <!-- Stock Risk Predictions -->
-    <div class="col-md-7">
+    <!-- Health Score -->
+    <div class="col-md-3">
         <div class="card h-100">
-            <div class="card-header text-danger">
-                <i class="bi bi-exclamation-triangle"></i>
-                Stock Risk Predictions
+            <div class="card-header">
+                <span class="section-title">
+                    <i class="bi bi-heart-pulse"></i>
+                    Business Health
+                </span>
+                <span class="ai-tag">AI</span>
             </div>
-            <div class="card-body p-0">
-                <table class="table table-hover mb-0">
+            <div class="card-body text-center">
+                <div class="health-circle {{ health.grade_color }}">
+                    <div class="health-score
+                        text-{{ health.grade_color }}">
+                        {{ health.total_score }}
+                    </div>
+                    <div class="small text-muted">/ 100</div>
+                </div>
+                <h5 class="fw-bold text-{{ health.grade_color }}">
+                    {{ health.grade_icon }} {{ health.grade }}
+                </h5>
+                <hr>
+                {% for key, metric in health.breakdown.items %}
+                <div class="mb-2 text-start">
+                    <div class="d-flex justify-content-between">
+                        <small class="fw-semibold">
+                            <i class="bi {{ metric.icon }}"></i>
+                            {{ metric.label }}
+                        </small>
+                        <small class="fw-bold text-{{ metric.color }}">
+                            {{ metric.score }}/{{ metric.max }}
+                        </small>
+                    </div>
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill bg-{{ metric.color }}"
+                            style="width: {{ metric.score|floatformat:0 }}0%">
+                        </div>
+                    </div>
+                    <div style="font-size:0.7rem; color:#999;">
+                        {{ metric.detail }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards + Weekly Order -->
+    <div class="col-md-9">
+        <div class="row g-3 mb-3">
+            <div class="col-md-3">
+                <div class="stat-card" style="border-left-color:#e53935">
+                    <p class="text-muted small mb-1">Critical Alerts</p>
+                    <h3 class="fw-bold text-danger">
+                        {{ low_stock_predictions|length }}
+                    </h3>
+                    <small class="text-muted">Products at risk</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card" style="border-left-color:#4caf50">
+                    <p class="text-muted small mb-1">30-Day Forecast</p>
+                    <h3 class="fw-bold text-success">
+                        Rs {% if forecast %}
+                        {{ forecast.total_forecast }}
+                        {% else %}0{% endif %}
+                    </h3>
+                    <small class="text-muted">
+                        {% if forecast %}
+                            {% if forecast.trend == 'UP' %}
+                            📈 Trending Up
+                            {% else %}
+                            📉 Trending Down
+                            {% endif %}
+                        {% endif %}
+                    </small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card" style="border-left-color:#ff9800">
+                    <p class="text-muted small mb-1">Order This Week</p>
+                    <h3 class="fw-bold text-warning">
+                        {{ weekly_orders.total_items }}
+                    </h3>
+                    <small class="text-muted">
+                        Rs {{ weekly_orders.total_estimated_cost }}
+                    </small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card" style="border-left-color:#9c27b0">
+                    <p class="text-muted small mb-1">Class A Products</p>
+                    <h3 class="fw-bold" style="color:#1a237e">
+                        {{ abc.a_count }}
+                    </h3>
+                    <small class="text-muted">
+                        80% of revenue
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weekly Order List -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between">
+                <span class="section-title">
+                    <i class="bi bi-cart-check"></i>
+                    What to Order This Week
+                </span>
+                <span class="ai-tag">AI</span>
+            </div>
+            <div class="card-body p-0"
+                style="max-height: 220px; overflow-y: auto;">
+                <table class="table table-sm mb-0">
                     <thead>
                         <tr>
                             <th>Product</th>
                             <th>Stock</th>
-                            <th>Avg Daily Sales</th>
-                            <th>Days Left</th>
-                            <th>Risk</th>
-                            <th>Restock</th>
+                            <th>Reorder At</th>
+                            <th>Order Qty</th>
+                            <th>Est. Cost</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for item in low_stock_predictions %}
-                        {% if item.days_until_stockout < 999 %} <tr>
-                            <td><strong>{{ item.product.name }}</strong></td>
-                            <td>{{ item.product.stock_quantity }}</td>
-                            <td>{{ item.avg_daily_sales }}</td>
+                        {% for item in weekly_orders.items %}
+                        <tr class="order-urgent">
                             <td>
-                                <span class="fw-bold
-                                    {% if item.days_until_stockout <= 7 %}text-danger
-                                    {% elif item.days_until_stockout <= 14 %}text-warning
-                                    {% else %}text-success{% endif %}">
-                                    {{ item.days_until_stockout }} days
-                                </span>
+                                <strong>{{ item.product.name }}</strong>
                             </td>
                             <td>
-                                <span class="badge
-                                    {% if item.risk == 'CRITICAL' %}bg-danger
-                                    {% elif item.risk == 'HIGH' %}bg-warning text-dark
-                                    {% elif item.risk == 'MEDIUM' %}bg-info text-dark
-                                    {% else %}bg-success{% endif %}">
-                                    {{ item.risk }}
+                                <span class="badge bg-danger">
+                                    {{ item.current_stock }}
                                 </span>
                             </td>
+                            <td>{{ item.reorder_point }}</td>
                             <td>
-                                <span class="text-primary fw-semibold">
-                                    +{{ item.recommended_restock }}
+                                <span class="text-primary fw-bold">
+                                    +{{ item.order_qty }}
                                 </span>
                             </td>
-                            </tr>
-                            {% endif %}
-                            {% empty %}
-                            <tr>
-                                <td colspan="6" class="text-center text-muted py-3">
-                                    No sales data available yet
-                                </td>
-                            </tr>
-                            {% endfor %}
+                            <td>Rs {{ item.estimated_cost }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5"
+                                class="text-center text-success py-3">
+                                <i class="bi bi-check-circle"></i>
+                                No urgent orders needed this week!
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ─── ROW 2: Sales Forecast Chart ─── -->
+{% if forecast %}
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="section-title">
+            <i class="bi bi-graph-up"></i>
+            Sales Forecast — Next 30 Days
+            <span class="ai-tag">Linear Regression</span>
+        </span>
+        <span class="badge
+            {% if forecast.trend == 'UP' %}bg-success
+            {% else %}bg-danger{% endif %}">
+            {% if forecast.trend == 'UP' %}📈{% else %}📉{% endif %}
+            {{ forecast.trend }} {{ forecast.trend_value }} Rs/day
+        </span>
+    </div>
+    <div class="card-body">
+        <canvas id="forecastChart" height="70"></canvas>
+    </div>
+</div>
+{% endif %}
+
+<!-- ─── ROW 3: ABC Analysis + Category Chart ─── -->
+<div class="row g-4 mb-4">
+
+    <!-- ABC Analysis -->
+    <div class="col-md-8">
+        <div class="card h-100">
+            <div class="card-header">
+                <span class="section-title">
+                    <i class="bi bi-bar-chart-steps"></i>
+                    ABC Product Analysis (Pareto 80/20)
+                </span>
+                <span class="ai-tag">AI</span>
+            </div>
+            <div class="card-body">
+
+                <!-- ABC Summary -->
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <div class="p-3 rounded text-center"
+                            style="background:#e8eaf6">
+                            <div class="fw-bold text-primary fs-4">
+                                {{ abc.a_count }}
+                            </div>
+                            <div class="abc-badge-a mb-1">Class A</div>
+                            <div class="small text-muted">
+                                Rs {{ abc.a_revenue }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 rounded text-center"
+                            style="background:#fff8e1">
+                            <div class="fw-bold text-warning fs-4">
+                                {{ abc.b_count }}
+                            </div>
+                            <div class="abc-badge-b mb-1">Class B</div>
+                            <div class="small text-muted">
+                                Rs {{ abc.b_revenue }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 rounded text-center"
+                            style="background:#f5f5f5">
+                            <div class="fw-bold text-secondary fs-4">
+                                {{ abc.c_count }}
+                            </div>
+                            <div class="abc-badge-c mb-1">Class C</div>
+                            <div class="small text-muted">
+                                Rs {{ abc.c_revenue }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <canvas id="abcChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Doughnut -->
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <span class="section-title">
+                    <i class="bi bi-pie-chart"></i>
+                    Revenue by Category
+                </span>
+            </div>
+            <div class="card-body">
+                <canvas id="categoryChart"></canvas>
+                <div class="mt-3">
+                    {% for cat, data in category_summary.items %}
+                    <div class="d-flex justify-content-between
+                        align-items-center mb-1">
+                        <small>{{ cat }}</small>
+                        <small class="fw-bold">
+                            Rs {{ data.total_revenue|floatformat:0 }}
+                        </small>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ─── ROW 4: Trend Detection + Stock Risk ─── -->
+<div class="row g-4 mb-4">
+
+    <!-- Trend Detection -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <span class="section-title">
+                    <i class="bi bi-activity"></i>
+                    Sales Trend Detection (7-Day)
+                </span>
+                <span class="ai-tag">AI</span>
+            </div>
+            <div class="card-body p-0">
+                <canvas id="trendChart" height="160"
+                    class="p-3"></canvas>
+                <table class="table table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Last 7d</th>
+                            <th>Prev 7d</th>
+                            <th>Change</th>
+                            <th>Trend</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in trends|slice:":6" %}
+                        <tr>
+                            <td>
+                                <small>
+                                    <strong>{{ t.product.name }}</strong>
+                                </small>
+                            </td>
+                            <td><small>{{ t.recent_7d }}</small></td>
+                            <td><small>{{ t.previous_7d }}</small></td>
+                            <td>
+                                <small class="
+                                    {% if t.change_pct > 0 %}trend-up
+                                    {% elif t.change_pct < 0 %}trend-down
+                                    {% else %}trend-stable{% endif %}">
+                                    {% if t.change_pct > 0 %}+{% endif %}
+                                    {{ t.change_pct }}%
+                                </small>
+                            </td>
+                            <td>{{ t.trend_icon }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5"
+                                class="text-center text-muted py-3">
+                                No trend data yet
+                            </td>
+                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- Category Sales Chart -->
-    <div class="col-md-5">
+    <!-- Stock Risk Predictions -->
+    <div class="col-md-6">
         <div class="card h-100">
             <div class="card-header">
-                <i class="bi bi-pie-chart text-primary"></i>
-                Sales by Category (Last 30 Days)
+                <span class="section-title">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    Stock Risk Predictions
+                </span>
+                <span class="ai-tag">AI</span>
             </div>
-            <div class="card-body">
-                <canvas id="categoryChart"></canvas>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Stock</th>
+                            <th>Daily Sales</th>
+                            <th>Days Left</th>
+                            <th>Risk</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in low_stock_predictions %}
+                        {% if item.days_until_stockout < 999 %}
+                        <tr>
+                            <td>
+                                <small>
+                                    <strong>{{ item.product.name }}</strong>
+                                </small>
+                            </td>
+                            <td>
+                                <small>{{ item.product.stock_quantity }}</small>
+                            </td>
+                            <td>
+                                <small>{{ item.avg_daily_sales }}</small>
+                            </td>
+                            <td>
+                                <small class="fw-bold
+                                    {% if item.days_until_stockout <= 7 %}text-danger
+                                    {% elif item.days_until_stockout <= 14 %}text-warning
+                                    {% else %}text-success{% endif %}">
+                                    {{ item.days_until_stockout }}d
+                                </small>
+                            </td>
+                            <td>
+                                <span class="badge
+                                    {% if item.risk == 'CRITICAL' %}bg-danger
+                                    {% elif item.risk == 'HIGH' %}bg-warning text-dark
+                                    {% elif item.risk == 'MEDIUM' %}bg-info text-dark
+                                    {% else %}bg-success{% endif %}"
+                                    style="font-size:0.65rem">
+                                    {{ item.risk }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% empty %}
+                        <tr>
+                            <td colspan="5"
+                                class="text-center text-muted py-3">
+                                No sales data available yet
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
 </div>
 
-<!-- Product Recommendations -->
-<div class="card">
+<!-- ─── ROW 5: Smart Reorder Plan ─── -->
+<div class="card mb-4">
     <div class="card-header">
-        <i class="bi bi-lightbulb text-warning"></i>
-        AI Restock Recommendations (Top 10 by Revenue)
+        <span class="section-title">
+            <i class="bi bi-calculator"></i>
+            Smart Reorder Point Calculator
+        </span>
+        <span class="ai-tag">AI</span>
+        <small class="text-muted ms-2">
+            Formula: Reorder Point = (Avg Daily Sales × 7 days) + Safety Stock
+        </small>
     </div>
     <div class="card-body p-0">
         <table class="table table-hover mb-0">
             <thead>
                 <tr>
                     <th>Product</th>
-                    <th>Sold (30d)</th>
-                    <th>Revenue (30d)</th>
+                    <th>Avg Daily Sales</th>
+                    <th>Safety Stock</th>
+                    <th>Reorder Point</th>
                     <th>Current Stock</th>
-                    <th>Recommended Restock</th>
-                    <th>Priority</th>
+                    <th>Order Qty</th>
+                    <th>Est. Cost</th>
+                    <th>Status</th>
                 </tr>
             </thead>
             <tbody>
-                {% for rec in recommendations %}
-                <tr>
-                    <td><strong>{{ rec.product.name }}</strong></td>
-                    <td>{{ rec.total_sold_30d }}</td>
-                    <td>Rs {{ rec.revenue_30d }}</td>
-                    <td>{{ rec.current_stock }}</td>
+                {% for item in reorder_plan %}
+                <tr {% if item.needs_order_now %}
+                    class="table-warning"{% endif %}>
                     <td>
-                        <span class="text-primary fw-bold">
-                            +{{ rec.restock_qty }} units
+                        <strong>{{ item.product.name }}</strong>
+                    </td>
+                    <td>{{ item.avg_daily_sales }}</td>
+                    <td>{{ item.safety_stock }}</td>
+                    <td>
+                        <span class="fw-semibold text-primary">
+                            {{ item.reorder_point }}
                         </span>
                     </td>
                     <td>
-                        <span class="badge {% if rec.priority == 'HIGH' %}bg-danger{% else %}bg-secondary{% endif %}">
-                            {{ rec.priority }}
+                        <span class="badge
+                            {% if item.needs_order_now %}bg-danger
+                            {% else %}bg-success{% endif %}">
+                            {{ item.current_stock }}
                         </span>
+                    </td>
+                    <td>
+                        <span class="text-primary fw-bold">
+                            +{{ item.order_qty }}
+                        </span>
+                    </td>
+                    <td>Rs {{ item.estimated_cost }}</td>
+                    <td>
+                        {% if item.needs_order_now %}
+                        <span class="badge bg-warning text-dark">
+                            <i class="bi bi-cart"></i> Order Now
+                        </span>
+                        {% else %}
+                        <span class="badge bg-success">
+                            <i class="bi bi-check"></i> OK
+                        </span>
+                        {% endif %}
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6" class="text-center text-muted py-3">
-                        No sales data available yet. Create some invoices first!
+                    <td colspan="8"
+                        class="text-center text-muted py-3">
+                        No sales data available yet
                     </td>
                 </tr>
                 {% endfor %}
@@ -180,78 +562,140 @@
 
 {% block extra_js %}
 <script>
-    {% if forecast %}
-    // Sales Forecast Chart
-    const forecastCtx = document.getElementById('forecastChart').getContext('2d');
-    new Chart(forecastCtx, {
-        type: 'line',
-        data: {
-            labels: [
-                ...{{ forecast.historical_labels | safe }},
-        ...{{ forecast.forecast_labels | safe }}
+// ── 1. Sales Forecast Chart
+{% if forecast %}
+new Chart(
+    document.getElementById('forecastChart').getContext('2d'),
+{
+    type: 'line',
+    data: {
+        labels: [
+            ...{{ forecast.historical_labels|safe }},
+            ...{{ forecast.forecast_labels|safe }}
         ],
         datasets: [
-        {
-            label: 'Actual Revenue',
-            data: [
-                ...{{ forecast.historical_data | safe }},
-        ...Array({{ forecast.forecast_labels | length }}).fill(null)
-    ],
-        borderColor: 'rgba(26, 35, 126, 1)',
-        backgroundColor: 'rgba(26, 35, 126, 0.1)',
-        fill: true,
-        tension: 0.4,
-            },
-        {
-            label: 'Forecasted Revenue',
-            data: [
-                ...Array({{ forecast.historical_labels | length }}).fill(null),
-                    ...{ { forecast.forecast_data | safe } }
+            {
+                label: 'Actual Revenue (Rs)',
+                data: [
+                    ...{{ forecast.historical_data|safe }},
+                    ...Array(
+                        {{ forecast.forecast_labels|length }}
+                    ).fill(null)
                 ],
-    borderColor: 'rgba(76, 175, 80, 1)',
-        backgroundColor: 'rgba(76, 175, 80, 0.1)',
-            borderDash: [5, 5],
+                borderColor: '#1a237e',
+                backgroundColor: 'rgba(26,35,126,0.08)',
                 fill: true,
-                    tension: 0.4,
+                tension: 0.4,
+                pointRadius: 3,
+            },
+            {
+                label: 'Forecasted Revenue (Rs)',
+                data: [
+                    ...Array(
+                        {{ forecast.historical_labels|length }}
+                    ).fill(null),
+                    ...{{ forecast.forecast_data|safe }}
+                ],
+                borderColor: '#4caf50',
+                backgroundColor: 'rgba(76,175,80,0.08)',
+                borderDash: [6, 3],
+                fill: true,
+                tension: 0.4,
+                pointRadius: 3,
             }
         ]
     },
     options: {
         responsive: true,
-            interaction: { intersect: false, mode: 'index' },
+        interaction: { intersect: false, mode: 'index' },
         plugins: {
             legend: { position: 'top' },
             tooltip: {
                 callbacks: {
-                    label: ctx => `Rs ${ctx.parsed.y?.toFixed(2) ?? 'N/A'}`
+                    label: ctx =>
+                        `Rs ${ctx.parsed.y?.toFixed(2) ?? 'N/A'}`
                 }
             }
         },
-        scales: {
-            y: { beginAtZero: true }
-        }
+        scales: { y: { beginAtZero: true } }
     }
 });
-    {% endif %}
+{% endif %}
 
-    // Category Pie Chart
-    const catCtx = document.getElementById('categoryChart').getContext('2d');
-    new Chart(catCtx, {
-        type: 'doughnut',
-        data: {
-            labels: {{ cat_labels| safe }},
+// ── 2. ABC Analysis Chart
+new Chart(
+    document.getElementById('abcChart').getContext('2d'),
+{
+    type: 'bar',
+    data: {
+        labels: {{ abc_labels|safe }},
         datasets: [{
-            data: {{ cat_data| safe }},
-        backgroundColor: [
-            '#1a237e', '#e53935', '#4caf50',
-            '#ff9800', '#9c27b0', '#00bcd4'
-        ],
+            label: 'Revenue (Rs)',
+            data: {{ abc_data|safe }},
+            backgroundColor: {{ abc_colors|safe }},
+            borderRadius: 6,
         }]
     },
-        options: {
+    options: {
         responsive: true,
         plugins: {
-            legend: { position: 'bottom' }
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: ctx => `Rs ${ctx.parsed.y.toFixed(2)}`
+                }
+            }
+        },
+        scales: { y: { beginAtZero: true } }
+    }
+});
+
+// ── 3. Category Doughnut Chart
+new Chart(
+    document.getElementById('categoryChart').getContext('2d'),
+{
+    type: 'doughnut',
+    data: {
+        labels: {{ cat_labels|safe }},
+        datasets: [{
+            data: {{ cat_data|safe }},
+            backgroundColor: [
+                '#1a237e','#e53935','#4caf50',
+                '#ff9800','#9c27b0','#00bcd4'
+            ],
+            borderWidth: 2,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom' } }
+    }
+});
+
+// ── 4. Trend Chart
+new Chart(
+    document.getElementById('trendChart').getContext('2d'),
+{
+    type: 'bar',
+    data: {
+        labels: {{ trend_labels|safe }},
+        datasets: [{
+            label: 'Change %',
+            data: {{ trend_data|safe }},
+            backgroundColor: {{ trend_colors|safe }},
+            borderRadius: 6,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: {
+                beginAtZero: false,
+                ticks: {
+                    callback: val => val + '%'
+                }
+            }
         }
     }
 });
