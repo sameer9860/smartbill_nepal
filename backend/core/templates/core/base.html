@@ -190,6 +190,10 @@
                 class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                 <i class="bi bi-speedometer2"></i> Dashboard
             </a>
+            <a href="{% url 'category_list' %}"
+                class="nav-link {% if 'category' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-tag"></i> Categories
+            </a>
             <a href="{% url 'product_list' %}"
                 class="nav-link {% if 'product' in request.resolver_match.url_name %}active{% endif %}">
                 <i class="bi bi-box-seam"></i> Products
@@ -263,7 +267,8 @@
                         aria-labelledby="userProfileDropdown" style="border-radius: 8px;">
                         <li>
                             <div class="px-3 py-2 border-bottom">
-                                <div class="fw-bold text-dark small">{{request.user.get_full_name|default:request.user.username }}</div>
+                                <div class="fw-bold text-dark small">
+                                    {{request.user.get_full_name|default:request.user.username }}</div>
                                 <div class="text-muted small">@{{ request.user.username }}</div>
                             </div>
                         </li>
