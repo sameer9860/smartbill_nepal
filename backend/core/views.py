@@ -5,7 +5,7 @@ from django.utils import timezone
 from datetime import timedelta
 from django.contrib.auth.decorators import login_required
 from .models import Product, Customer, Invoice, InvoiceItem, StockMovement, Category
-from .forms import ProductForm, CustomerForm, InvoiceForm, InvoiceItemFormSet
+from .forms import ProductForm, CustomerForm, InvoiceForm, InvoiceItemFormSet,CategoryForm
 import json
 from .ai import (
     predict_low_stock,
@@ -76,6 +76,93 @@ def dashboard(request):
     }
     return render(request, 'core/dashboard.html', context)
 
+# CATEGORIES
+@login_required
+def category_list(request):
+    search = request.GET.get('search', '')
+    categories = Category.objects.annotate(
+        product_count=Count('product')
+    ).all()
+    if search:
+        categories = categories.filter(
+            name__icontains=search
+        )
+    return render(request, 'core/category_list.html', {
+        'categories': categories,
+        'search': search
+    })
+
+
+@login_required
+def category_add(request):
+    if request.method == 'POST':
+        form = CategoryForm(request.POST)
+        if form.is_valid():
+            category = form.save()
+            messages.success(
+                request,
+                f'Category "{category.name}" added successfully!'
+            )
+            return redirect('category_list')
+    else:
+        form = CategoryForm()
+
+    existing_categories = Category.objects.annotate(
+        product_count=Count('product')
+    ).order_by('name')
+
+    return render(request, 'core/category_form.html', {
+        'form': form,
+        'title': 'Add Category',
+        'existing_categories': existing_categories,
+    })
+
+
+@login_required
+def category_edit(request, pk):
+    category = get_object_or_404(Category, pk=pk)
+    if request.method == 'POST':
+        form = CategoryForm(request.POST, instance=category)
+        if form.is_valid():
+            category = form.save()
+            messages.success(
+                request,
+                f'Category "{category.name}" updated!'
+            )
+            return redirect('category_list')
+    else:
+        form = CategoryForm(instance=category)
+
+    existing_categories = Category.objects.annotate(
+        product_count=Count('product')
+    ).exclude(pk=pk).order_by('name')
+
+    return render(request, 'core/category_form.html', {
+        'form': form,
+        'title': f'Edit Category — {category.name}',
+        'existing_categories': existing_categories,
+    })
+
+
+@login_required
+def category_delete(request, pk):
+    category = get_object_or_404(Category, pk=pk)
+    if request.method == 'POST':
+        product_count = category.product_count \
+            if hasattr(category, 'product_count') \
+            else category.product_set.count()
+        name = category.name
+        category.delete()
+        messages.success(
+            request,
+            f'Category "{name}" deleted! '
+            f'{product_count} products set to uncategorized.'
+        )
+        return redirect('category_list')
+    return render(request, 'core/category_confirm_delete.html', {
+        'category': category,
+        'product_count': category.product_set.count()
+    })
 
 # PRODUCTS
 @login_required
@@ -273,7 +360,17 @@ def invoice_create(request):
                     messages.error(request, error)
                 return render(request, 'core/invoice_form.html', {
                     'form': form,
-                    'formset': formset
+                    'formset': formset,
+                    'products': Product.objects.all(),
+                    'customers_json': json.dumps({
+                        str(c.pk): {
+                            'name': c.full_name,
+                            'phone': c.phone or '',
+                            'email': c.email or '',
+                            'avatar': c.full_name[0].upper() if c.full_name else '?',
+                        }
+                        for c in Customer.objects.exclude(phone='Walk-in')
+                    }),
                 })
 
             # ── Save Invoice
@@ -310,11 +407,23 @@ def invoice_create(request):
         form = InvoiceForm()
         formset = InvoiceItemFormSet()
 
+    customers_data = {
+        str(c.pk): {
+            'name': c.full_name,
+            'phone': c.phone or '',
+            'email': c.email or '',
+            'avatar': c.full_name[0].upper() if c.full_name else '?',
+        }
+        for c in Customer.objects.exclude(phone='Walk-in')
+    }
+
     return render(request, 'core/invoice_form.html', {
         'form': form,
         'formset': formset,
         'products': Product.objects.all(),
+        'customers_json': json.dumps(customers_data),
     })
+
 
 @login_required
 def invoice_detail(request, pk):
@@ -405,13 +514,14 @@ def ai_dashboard(request):
     category_summary = get_category_sales_summary()
 
     # ABC chart data
-    abc_labels = [p['product'].name for p in abc['all'][:10]]
-    abc_data = [p['revenue'] for p in abc['all'][:10]]
+    abc_items = abc.get('all') or (abc.get('A', []) + abc.get('B', []) + abc.get('C', []))
+    abc_labels = [p['product'].name for p in abc_items[:10]]
+    abc_data = [p['revenue'] for p in abc_items[:10]]
     abc_colors = [
         '#1a237e' if p['class'] == 'A'
         else '#ff9800' if p['class'] == 'B'
         else '#9e9e9e'
-        for p in abc['all'][:10]
+        for p in abc_items[:10]
     ]
 
     # Trend chart data
