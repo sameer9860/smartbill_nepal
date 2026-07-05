@@ -57,10 +57,37 @@
                         <label class="form-label fw-semibold">
                             Select Customer
                         </label>
+
+                        <div class="input-group mb-2">
+                            <span class="input-group-text bg-white">
+                                <i class="bi bi-search text-muted"></i>
+                            </span>
+                            <input type="text"
+                                id="customerSearch"
+                                class="form-control"
+                                placeholder="Type name or phone to filter...">
+                        </div>
+
                         {{ form.customer }}
 
-                        <!-- Quick search hint -->
-                        <small class="text-muted">
+                        <div id="selectedCustomerInfo"
+                            class="mt-2 p-3 rounded border border-primary bg-primary bg-opacity-10"
+                            style="display:none;">
+                            <div class="d-flex align-items-center gap-3">
+                                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #1a237e, #1565c0); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1rem; flex-shrink: 0;"
+                                    id="customerAvatar"></div>
+                                <div>
+                                    <div class="fw-bold" id="customerName"></div>
+                                    <div class="small text-muted">
+                                        <i class="bi bi-telephone"></i>
+                                        <span id="customerPhone"></span>
+                                    </div>
+                                    <div class="small text-muted" id="customerEmail"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <small class="text-muted mt-1 d-block">
                             <i class="bi bi-info-circle"></i>
                             Customer not in list?
                             Switch to Walk-in Customer above.
@@ -190,6 +217,54 @@
 
 {% block extra_js %}
 <script>
+const customersData = {{ customers_json|safe }};
+
+// ── Customer Search Filter
+const customerSearch = document.getElementById('customerSearch');
+const customerSelect = document.querySelector('select[name="customer"]');
+
+if (customerSearch && customerSelect) {
+    customerSearch.addEventListener('input', function() {
+        const query = this.value.toLowerCase();
+        const options = customerSelect.querySelectorAll('option');
+
+        options.forEach(option => {
+            if (!option.value) return;
+            const text = option.textContent.toLowerCase();
+            option.style.display = text.includes(query) ? '' : 'none';
+        });
+
+        if (customerSelect.value) {
+            const selected = customerSelect.options[customerSelect.selectedIndex];
+            if (selected && !selected.textContent.toLowerCase().includes(query)) {
+                customerSelect.value = '';
+                hideCustomerInfo();
+            }
+        }
+    });
+
+    customerSelect.addEventListener('change', function() {
+        const pk = this.value;
+        if (pk && customersData[pk]) {
+            showCustomerInfo(customersData[pk]);
+        } else {
+            hideCustomerInfo();
+        }
+    });
+}
+
+function showCustomerInfo(data) {
+    document.getElementById('customerAvatar').textContent = data.avatar;
+    document.getElementById('customerName').textContent = data.name;
+    document.getElementById('customerPhone').textContent = data.phone || 'No phone';
+    document.getElementById('customerEmail').textContent = data.email ? `✉ ${data.email}` : '';
+    document.getElementById('selectedCustomerInfo').style.display = 'block';
+}
+
+function hideCustomerInfo() {
+    document.getElementById('selectedCustomerInfo').style.display = 'none';
+}
+
 // ── Toggle Customer Type
 const existingSection = document.getElementById('existingCustomerSection');
 const walkinSection = document.getElementById('walkinCustomerSection');
@@ -215,6 +290,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (selected && selected.value === 'walkin') {
         existingSection.style.display = 'none';
         walkinSection.style.display = 'block';
+    }
+
+    if (customerSelect && customerSelect.value && customersData[customerSelect.value]) {
+        showCustomerInfo(customersData[customerSelect.value]);
     }
 });
 
