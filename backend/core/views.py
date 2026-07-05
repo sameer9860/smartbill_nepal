@@ -10,9 +10,15 @@ import json
 from .ai import (
     predict_low_stock,
     forecast_sales,
-    get_product_recommendations,
-    get_category_sales_summary
+    abc_analysis,
+    detect_trends,
+    business_health_score,
+    smart_reorder_plan,
+    weekly_order_list,
+    get_category_sales_summary,
 )
+from django.urls import reverse
+
 
 def handler404(request, exception):
     return render(request, 'core/404.html', status=404)
@@ -145,7 +151,6 @@ def product_delete(request, pk):
         product.delete()
         messages.success(request, f'Product "{name}" deleted!')
         return redirect('product_list')
-    from django.urls import reverse
     return render(request, 'core/confirm_delete.html', {
         'object': product,
         'cancel_url': reverse('product_list')
@@ -210,8 +215,48 @@ def invoice_create(request):
     if request.method == 'POST':
         form = InvoiceForm(request.POST)
         formset = InvoiceItemFormSet(request.POST)
+
         if form.is_valid() and formset.is_valid():
-            # Validate stock before saving
+            customer_type = form.cleaned_data.get('customer_type')
+
+            # ── Handle Walk-in Customer
+            if customer_type == 'walkin':
+                walkin_name = form.cleaned_data.get('walkin_name').strip()
+                walkin_phone = form.cleaned_data.get(
+                    'walkin_phone', ''
+                ).strip()
+
+                # Check if customer with same name+phone already exists
+                existing = None
+                if walkin_phone:
+                    existing = Customer.objects.filter(
+                        full_name__iexact=walkin_name,
+                        phone=walkin_phone
+                    ).first()
+                else:
+                    existing = Customer.objects.filter(
+                        full_name__iexact=walkin_name
+                    ).first()
+
+                if existing:
+                    customer = existing
+                    messages.info(
+                        request,
+                        f'Existing customer "{customer.full_name}" found and linked.'
+                    )
+                else:
+                    customer = Customer.objects.create(
+                        full_name=walkin_name,
+                        phone=walkin_phone or 'Walk-in',
+                    )
+                    messages.info(
+                        request,
+                        f'New customer "{customer.full_name}" added to database.'
+                    )
+            else:
+                customer = form.cleaned_data.get('customer')
+
+            # ── Validate Stock
             errors = []
             for item_form in formset:
                 if item_form.cleaned_data and not item_form.cleaned_data.get('DELETE'):
@@ -231,9 +276,11 @@ def invoice_create(request):
                     'formset': formset
                 })
 
-            # Save invoice
+            # ── Save Invoice
             invoice = form.save(commit=False)
+            invoice.customer = customer
             invoice.save()
+
             items = formset.save(commit=False)
             total = 0
             for item in items:
@@ -249,19 +296,24 @@ def invoice_create(request):
                     quantity=item.quantity,
                     reason=f'Invoice #{invoice.invoice_number}'
                 )
+
             invoice.total_amount = total
             invoice.save()
+
             messages.success(
                 request,
                 f'Invoice #{invoice.invoice_number} created successfully!'
             )
             return redirect('invoice_detail', pk=invoice.pk)
+
     else:
         form = InvoiceForm()
         formset = InvoiceItemFormSet()
+
     return render(request, 'core/invoice_form.html', {
         'form': form,
-        'formset': formset
+        'formset': formset,
+        'products': Product.objects.all(),
     })
 
 @login_required
@@ -289,7 +341,6 @@ def invoice_delete(request, pk):
         invoice.delete()
         messages.success(request, f'Invoice #{invoice_number} deleted!')
         return redirect('invoice_list')
-    from django.urls import reverse
     return render(request, 'core/confirm_delete.html', {
         'object': invoice,
         'cancel_url': reverse('invoice_list')
@@ -344,11 +395,34 @@ def reports(request):
 
 @login_required
 def ai_dashboard(request):
-    """Main AI insights page."""
     low_stock_predictions = predict_low_stock()
-    recommendations = get_product_recommendations()
-    category_summary = get_category_sales_summary()
     forecast = forecast_sales(days_ahead=30)
+    abc = abc_analysis()
+    trends = detect_trends()
+    health = business_health_score()
+    reorder_plan = smart_reorder_plan()
+    weekly_orders = weekly_order_list()
+    category_summary = get_category_sales_summary()
+
+    # ABC chart data
+    abc_labels = [p['product'].name for p in abc['all'][:10]]
+    abc_data = [p['revenue'] for p in abc['all'][:10]]
+    abc_colors = [
+        '#1a237e' if p['class'] == 'A'
+        else '#ff9800' if p['class'] == 'B'
+        else '#9e9e9e'
+        for p in abc['all'][:10]
+    ]
+
+    # Trend chart data
+    trend_labels = [t['product'].name for t in trends[:8]]
+    trend_data = [t['change_pct'] for t in trends[:8]]
+    trend_colors = [
+        '#4caf50' if t['trend'] == 'UP'
+        else '#f44336' if t['trend'] == 'DOWN'
+        else '#ff9800'
+        for t in trends[:8]
+    ]
 
     # Category chart data
     cat_labels = list(category_summary.keys())
@@ -356,9 +430,21 @@ def ai_dashboard(request):
 
     context = {
         'low_stock_predictions': low_stock_predictions,
-        'recommendations': recommendations,
-        'category_summary': category_summary,
         'forecast': forecast,
+        'abc': abc,
+        'trends': trends,
+        'health': health,
+        'reorder_plan': reorder_plan,
+        'weekly_orders': weekly_orders,
+        'category_summary': category_summary,
+
+        # Chart data
+        'abc_labels': json.dumps(abc_labels),
+        'abc_data': json.dumps(abc_data),
+        'abc_colors': json.dumps(abc_colors),
+        'trend_labels': json.dumps(trend_labels),
+        'trend_data': json.dumps(trend_data),
+        'trend_colors': json.dumps(trend_colors),
         'cat_labels': json.dumps(cat_labels),
         'cat_data': json.dumps(cat_data),
     }
