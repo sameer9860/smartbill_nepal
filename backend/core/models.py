@@ -2,6 +2,8 @@ from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
 from .utils import generate_invoice_number
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 
 # Tenant (Store) Model
@@ -170,8 +172,19 @@ class Invoice(TenantModel):
         super().save(*args, **kwargs)
 
 
+class InvoiceItemManager(models.Manager):
+    def get_queryset(self):
+        from .utils import get_current_tenant
+        tenant = get_current_tenant()
+        if tenant:
+            return super().get_queryset().filter(invoice__tenant=tenant)
+        return super().get_queryset()
+
+
 # Invoice Line Items
 class InvoiceItem(models.Model):
+    objects = InvoiceItemManager()
+
     invoice = models.ForeignKey(
         Invoice,
         on_delete=models.CASCADE,
@@ -219,8 +232,7 @@ class StockMovement(TenantModel):
 
 
 # Signals to auto-create profile and default tenant for new users
-from django.db.models.signals import post_save
-from django.dispatch import receiver
+
 
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
