@@ -1,0 +1,113 @@
+{% extends 'core/base.html' %}
+{% block title %}- Categories{% endblock %}
+{% block page_title %}Categories{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>
+            <i class="bi bi-tag text-primary"></i>
+            All Categories
+        </span>
+        <a href="{% url 'category_add' %}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-lg"></i> Add Category
+        </a>
+    </div>
+    <div class="card-body">
+
+        <!-- Search -->
+        <form method="get" class="mb-3">
+            <div class="input-group" style="max-width: 350px;">
+                <input type="text"
+                    name="search"
+                    value="{{ search }}"
+                    class="form-control"
+                    placeholder="Search categories...">
+                <button class="btn btn-primary" type="submit">
+                    <i class="bi bi-search"></i>
+                </button>
+                {% if search %}
+                <a href="{% url 'category_list' %}"
+                    class="btn btn-outline-secondary">
+                    Clear
+                </a>
+                {% endif %}
+            </div>
+        </form>
+
+        <!-- Table -->
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>S.N.</th>
+                    <th>Category Name</th>
+                    <th>Total Products</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for category in categories %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div style="
+                                width: 32px; height: 32px;
+                                background: linear-gradient(
+                                    135deg, #1a237e, #1565c0
+                                );
+                                border-radius: 8px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                color: white;
+                                font-size: 0.8rem;
+                                font-weight: 700;
+                                flex-shrink: 0;">
+                                {{ category.name|first|upper }}
+                            </div>
+                            <strong>{{ category.name }}</strong>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge bg-primary rounded-pill">
+                            {{ category.product_count }}
+                            product{{ category.product_count|pluralize }}
+                        </span>
+                    </td>
+                    <td>
+                        <small class="text-muted">
+                            {{ category.created_at|date:"d M Y" }}
+                        </small>
+                    </td>
+                    <td>
+                        <a href="{% url 'category_edit' category.pk %}"
+                            class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <a href="{% url 'category_delete' category.pk %}"
+                            class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-4">
+                        <div class="text-muted">
+                            <i class="bi bi-tag fs-2 d-block mb-2"></i>
+                            No categories found.
+                            <a href="{% url 'category_add' %}">
+                                Add your first category
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
+</div>
+{% endblock %}

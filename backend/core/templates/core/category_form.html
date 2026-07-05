@@ -1,0 +1,77 @@
+{% extends 'core/base.html' %}
+{% block title %}- {{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-tag text-primary"></i>
+                {{ title }}
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">
+                            Category Name
+                            <span class="text-danger">*</span>
+                        </label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                        <div class="text-danger small mt-1">
+                            {{ form.name.errors }}
+                        </div>
+                        {% endif %}
+                        <!-- <small class="text-muted">
+                            e.g. Electronics, Grocery, Stationery,
+                            Clothing, Medicine
+                        </small> -->
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i>
+                            Save Category
+                        </button>
+                        <a href="{% url 'category_list' %}"
+                            class="btn btn-outline-secondary">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Existing Categories Preview -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <i class="bi bi-list-ul text-primary"></i>
+                Existing Categories
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for cat in existing_categories %}
+                    <li class="list-group-item d-flex
+                        justify-content-between align-items-center">
+                        <span>
+                            <i class="bi bi-tag-fill text-primary me-2"></i>
+                            {{ cat.name }}
+                        </span>
+                        <span class="badge bg-secondary rounded-pill">
+                            {{ cat.product_count }} products
+                        </span>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item text-muted text-center py-3">
+                        No categories yet
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
