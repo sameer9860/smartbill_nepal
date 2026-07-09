@@ -10,8 +10,32 @@
 
 ---
 
+## Live Demo & Credentials
+
+| | |
+|---|---|
+| **Live App** | [https://smartbillnepal-production.up.railway.app](https://smartbillnepal-production.up.railway.app) |
+| **Login Page** | [https://smartbillnepal-production.up.railway.app/accounts/login/](https://smartbillnepal-production.up.railway.app/accounts/login/) |
+| **GitHub Repository** | [https://github.com/sameer9860/smartbill_nepal](https://github.com/sameer9860/smartbill_nepal) |
+| **Demo Username** | `demo` |
+| **Demo Password** | `Demo@1234` |
+
+**Project submission summary**
+
+SmartBill Nepal is an AI-powered billing, inventory, and business management web app built for small and medium businesses in Nepal. It includes product & inventory management, customer management, invoice billing with 13% Nepal VAT, printable invoices, low-stock alerts, sales reports, and AI features such as stock risk prediction, sales forecasting, ABC analysis, and smart restock recommendations.
+
+- **Live Demo:** [smartbillnepal-production.up.railway.app](https://smartbillnepal-production.up.railway.app)
+- **Source Code:** [github.com/sameer9860/smartbill_nepal](https://github.com/sameer9860/smartbill_nepal)
+- **Login:** `demo` / `Demo@1234`
+- **Stack:** Python, Django 6.0.6, PostgreSQL, Bootstrap 5, Chart.js, scikit-learn
+- **Deployed on:** [Railway](https://railway.app)
+- **Developer:** Samir Khatiwada — Dlytica Academy (30 Days of Learning Challenge)
+
+---
+
 ## Table of Contents
 
+- [Live Demo & Credentials](#live-demo--credentials)
 - [Overview](#overview)
 - [Features](#features)
 - [Tech Stack](#tech-stack)
