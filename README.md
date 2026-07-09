@@ -217,7 +217,7 @@ cd smartbill_nepal/backend
 ```bash
 python3 -m venv venv
 source venv/bin/activate        # Linux / macOS
-# venv\Scripts\activate         # Windows
+ venv\Scripts\activate         # Windows
 ```
 
 ### 3. Install dependencies
