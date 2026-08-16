@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
@@ -6,13 +8,83 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 
+def default_trial_ends_at():
+    return timezone.now() + timedelta(days=3)
+
+
 # Tenant (Store) Model
 class Tenant(models.Model):
+    PLAN_TRIAL = 'TRIAL'
+    PLAN_BASIC_MONTHLY = 'BASIC_MONTHLY'
+    PLAN_PRO_YEARLY = 'PRO_YEARLY'
+    PLAN_ENTERPRISE = 'ENTERPRISE'
+    PLAN_CHOICES = [
+        (PLAN_TRIAL, 'Free Trial'),
+        (PLAN_BASIC_MONTHLY, 'Basic Monthly'),
+        (PLAN_PRO_YEARLY, 'Pro Yearly'),
+        (PLAN_ENTERPRISE, 'Enterprise'),
+    ]
+
+    STATUS_TRIAL_ACTIVE = 'TRIAL_ACTIVE'
+    STATUS_ACTIVE = 'ACTIVE'
+    STATUS_EXPIRED = 'EXPIRED'
+    STATUS_CANCELLED = 'CANCELLED'
+    STATUS_CHOICES = [
+        (STATUS_TRIAL_ACTIVE, 'Trial Active'),
+        (STATUS_ACTIVE, 'Active'),
+        (STATUS_EXPIRED, 'Expired'),
+        (STATUS_CANCELLED, 'Cancelled'),
+    ]
+
     name = models.CharField(max_length=200)
     created_at = models.DateTimeField(auto_now_add=True)
+    trial_starts_at = models.DateTimeField(default=timezone.now)
+    trial_ends_at = models.DateTimeField(default=default_trial_ends_at)
+    subscription_plan = models.CharField(
+        max_length=32,
+        choices=PLAN_CHOICES,
+        default=PLAN_TRIAL,
+    )
+    subscription_status = models.CharField(
+        max_length=32,
+        choices=STATUS_CHOICES,
+        default=STATUS_TRIAL_ACTIVE,
+    )
+    subscription_ends_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return self.name
+
+    def is_trial_active(self):
+        if self.subscription_status != self.STATUS_TRIAL_ACTIVE:
+            return False
+        return timezone.now() < self.trial_ends_at
+
+    def is_subscription_valid(self):
+        if self.subscription_status == self.STATUS_ACTIVE:
+            if self.subscription_ends_at is None:
+                return True
+            return timezone.now() < self.subscription_ends_at
+        return False
+
+    def has_access(self):
+        return self.is_trial_active() or self.is_subscription_valid()
+
+    def days_left_in_trial(self):
+        if not self.is_trial_active():
+            return 0
+        remaining = self.trial_ends_at - timezone.now()
+        return max(0, remaining.days + (1 if remaining.seconds > 0 else 0))
+
+    def sync_expiry_status(self):
+        """Mark tenant expired when trial/subscription windows have passed."""
+        if self.is_trial_active() or self.is_subscription_valid():
+            return False
+        if self.subscription_status in (self.STATUS_TRIAL_ACTIVE, self.STATUS_ACTIVE):
+            self.subscription_status = self.STATUS_EXPIRED
+            self.save(update_fields=['subscription_status'])
+            return True
+        return False
 
 
 # User Profile Model
