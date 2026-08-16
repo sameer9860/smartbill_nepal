@@ -1,3 +1,9 @@
 venv/
 __pycache__/
 .env
+.env.local
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+*.pyc
+.DS_Store
