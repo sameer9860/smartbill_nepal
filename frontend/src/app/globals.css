@@ -1,0 +1,49 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Source+Sans+3:wght@400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --navy: #1a237e;
+  --navy-2: #1565c0;
+  --ink: #1c2434;
+  --ink-muted: #5b6577;
+  --surface: #f3f5f9;
+  --surface-2: #e8ecf4;
+  --line: #d5dbe8;
+  --card: #ffffff;
+  --accent: #0f766e;
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body: "Source Sans 3", "Segoe UI", sans-serif;
+}
+
+body {
+  color: var(--ink);
+  background: var(--surface);
+  font-family: var(--font-body);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.btn-primary {
+  @apply inline-flex items-center justify-center rounded-md bg-[var(--navy)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#283593] disabled:cursor-not-allowed disabled:opacity-60;
+}
+
+.btn-secondary {
+  @apply inline-flex items-center justify-center rounded-md border border-[var(--line)] bg-white px-4 py-2.5 text-sm font-medium text-[var(--ink)] transition hover:bg-[var(--surface-2)];
+}
+
+.input {
+  @apply w-full rounded-md border border-[var(--line)] bg-white px-3 py-2.5 text-sm outline-none transition focus:border-[var(--navy-2)] focus:ring-2 focus:ring-sky-200;
+}
+
+.card {
+  @apply rounded-xl border border-[var(--line)] bg-[var(--card)] p-5 shadow-sm;
+}
+
+.label {
+  @apply mb-1.5 block text-sm font-medium text-[var(--ink)];
+}
