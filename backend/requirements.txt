@@ -1,7 +1,9 @@
 asgiref==3.11.1
 Django==6.0.6
+django-cors-headers==4.9.0
 django-environ==0.12.0
 djangorestframework==3.17.1
+djangorestframework-simplejwt==5.5.1
 gunicorn==23.0.0
 joblib==1.5.3
 narwhals==2.23.0
