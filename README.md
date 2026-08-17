@@ -78,6 +78,7 @@ Each registered user gets their own isolated store (tenant), so data from one bu
 - **Printable invoices** — print-ready invoice template
 - **Sales reports** — revenue and business reporting views
 
+
 ### AI & Analytics
 
 - **Stock risk prediction** — days until stockout based on sales velocity
