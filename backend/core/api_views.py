@@ -1,15 +1,24 @@
 from datetime import timedelta
 from decimal import Decimal
 
-from django.db.models import Count, F, Sum
+from django.db.models import Count, DecimalField, ExpressionWrapper, F, Sum
 from django.utils import timezone
 from rest_framework import mixins, status, viewsets
-from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Category, Customer, Invoice, Product, StockMovement, Tenant
+from .ai import (
+    abc_analysis,
+    business_health_score,
+    detect_trends,
+    forecast_sales,
+    get_category_sales_summary,
+    predict_low_stock,
+    smart_reorder_plan,
+    weekly_order_list,
+)
+from .models import Category, Customer, Invoice, InvoiceItem, Product, StockMovement, Tenant
 from .permissions import HasActiveTrialOrSubscription, resolve_tenant
 from .serializers import (
     CategorySerializer,
@@ -231,3 +240,188 @@ class SubscribeAPIView(APIView):
                 'tenant': TenantSubscriptionSerializer(tenant).data,
             }
         )
+
+
+class ReportsAPIView(APIView):
+    permission_classes = [IsAuthenticated, HasActiveTrialOrSubscription]
+
+    def get(self, request):
+        resolve_tenant(request)
+
+        revenue_expr = ExpressionWrapper(
+            F('unit_price') * F('quantity'),
+            output_field=DecimalField(max_digits=12, decimal_places=2),
+        )
+        top_products = list(
+            InvoiceItem.objects.values('product__name')
+            .annotate(
+                total_qty=Sum('quantity'),
+                total_revenue=Sum(revenue_expr),
+            )
+            .order_by('-total_qty')[:10]
+        )
+
+        status_data = list(
+            Invoice.objects.values('status').annotate(
+                count=Count('id'),
+                total=Sum('total_amount'),
+            )
+        )
+
+        total_revenue = float(
+            Invoice.objects.filter(status='PAID').aggregate(total=Sum('total_amount'))['total']
+            or 0
+        )
+
+        monthly_data = []
+        for i in range(5, -1, -1):
+            month_start = (timezone.now() - timedelta(days=30 * i)).replace(
+                day=1, hour=0, minute=0, second=0
+            )
+            month_end = (month_start + timedelta(days=32)).replace(day=1)
+            rev = float(
+                Invoice.objects.filter(
+                    created_at__gte=month_start,
+                    created_at__lt=month_end,
+                    status='PAID',
+                ).aggregate(total=Sum('total_amount'))['total']
+                or 0
+            )
+            monthly_data.append({'month': month_start.strftime('%b %Y'), 'revenue': rev})
+
+        return Response(
+            {
+                'top_products': [
+                    {
+                        'name': p['product__name'],
+                        'total_qty': p['total_qty'],
+                        'total_revenue': float(p['total_revenue'] or 0),
+                    }
+                    for p in top_products
+                ],
+                'status_breakdown': [
+                    {
+                        'status': s['status'],
+                        'count': s['count'],
+                        'total': float(s['total'] or 0),
+                    }
+                    for s in status_data
+                ],
+                'total_revenue': total_revenue,
+                'monthly_revenue': monthly_data,
+            }
+        )
+
+
+class AIInsightsAPIView(APIView):
+    permission_classes = [IsAuthenticated, HasActiveTrialOrSubscription]
+
+    def get(self, request):
+        resolve_tenant(request)
+
+        health = business_health_score()
+        forecast = forecast_sales(days_ahead=30)
+        abc = abc_analysis()
+        trends_raw = detect_trends()
+        stock_risk = predict_low_stock()
+        reorder = smart_reorder_plan()
+        weekly = weekly_order_list()
+        category_summary = get_category_sales_summary()
+
+        abc_items = abc.get('all') or (abc.get('A', []) + abc.get('B', []) + abc.get('C', []))
+
+        return Response(
+            {
+                'health': health,
+                'forecast': forecast,
+                'abc': {
+                    'items': [
+                        {
+                            'product_name': item['product'].name,
+                            'revenue': item['revenue'],
+                            'qty_sold': item['qty_sold'],
+                            'abc_class': item['class'],
+                            'revenue_pct': item.get('revenue_pct', 0),
+                            'cumulative_pct': item.get('cumulative_pct', 0),
+                        }
+                        for item in abc_items
+                    ],
+                    'total_revenue': abc.get('total_revenue', 0),
+                    'a_revenue': abc.get('a_revenue', 0),
+                    'b_revenue': abc.get('b_revenue', 0),
+                    'c_revenue': abc.get('c_revenue', 0),
+                    'a_count': abc.get('a_count', 0),
+                    'b_count': abc.get('b_count', 0),
+                    'c_count': abc.get('c_count', 0),
+                },
+                'trends': [
+                    {
+                        'product_name': t['product'].name,
+                        'recent_7d': t['recent_7d'],
+                        'previous_7d': t['previous_7d'],
+                        'change_pct': t['change_pct'],
+                        'trend': t['trend'],
+                    }
+                    for t in trends_raw
+                ],
+                'stock_risk': [
+                    {
+                        'product_name': r['product'].name,
+                        'stock_quantity': r['product'].stock_quantity,
+                        'avg_daily_sales': r['avg_daily_sales'],
+                        'days_until_stockout': r['days_until_stockout'],
+                        'risk': r['risk'],
+                        'recommended_restock': r['recommended_restock'],
+                    }
+                    for r in stock_risk
+                ],
+                'reorder_plan': [
+                    {
+                        'product_name': r['product'].name,
+                        'avg_daily_sales': r['avg_daily_sales'],
+                        'safety_stock': r['safety_stock'],
+                        'reorder_point': r['reorder_point'],
+                        'current_stock': r['current_stock'],
+                        'order_qty': r['order_qty'],
+                        'estimated_cost': r['estimated_cost'],
+                        'needs_order_now': r['needs_order_now'],
+                    }
+                    for r in reorder
+                ],
+                'weekly_orders': {
+                    'items': [
+                        {
+                            'product_name': w['product'].name,
+                            'stock_quantity': w['current_stock'],
+                            'reorder_point': w['reorder_point'],
+                            'order_qty': w['order_qty'],
+                            'estimated_cost': w['estimated_cost'],
+                        }
+                        for w in weekly.get('items', [])
+                    ],
+                    'total_items': weekly.get('total_items', 0),
+                    'total_estimated_cost': weekly.get('total_estimated_cost', 0),
+                },
+                'category_summary': [
+                    {
+                        'category': cat,
+                        'total_qty': data['total_qty'],
+                        'total_revenue': data['total_revenue'],
+                    }
+                    for cat, data in category_summary.items()
+                ],
+            }
+        )
+
+
+class LowStockAPIView(APIView):
+    permission_classes = [IsAuthenticated, HasActiveTrialOrSubscription]
+
+    def get(self, request):
+        resolve_tenant(request)
+        products = (
+            Product.objects.filter(stock_quantity__lte=F('low_stock_threshold'))
+            .select_related('category')
+            .order_by('stock_quantity')
+        )
+        return Response(ProductSerializer(products, many=True).data)
