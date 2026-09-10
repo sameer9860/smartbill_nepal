@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import { LoadingPage } from "@/components/LoadingCard";
+import { PageHeader } from "@/components/PageHeader";
 import { ApiError, coreApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import type { SubscriptionPlan } from "@/lib/types";
@@ -21,6 +23,7 @@ export default function SubscriptionPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [busyPlan, setBusyPlan] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     coreApi
@@ -28,7 +31,8 @@ export default function SubscriptionPage() {
       .then((res) => setPlans(res.plans))
       .catch((err) =>
         setError(err instanceof Error ? err.message : "Failed to load plans")
-      );
+      )
+      .finally(() => setLoading(false));
   }, []);
 
   async function subscribe(planId: string) {
@@ -57,17 +61,17 @@ export default function SubscriptionPage() {
 
   const tenant = user?.tenant;
 
+  if (loading) return <LoadingPage label="Loading plans…" />;
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-3xl text-[var(--navy)]">Subscription</h1>
-        <p className="mt-1 text-sm text-[var(--ink-muted)]">
-          Trial lasts 3 days. Choose a plan to continue after that.
-        </p>
-      </div>
+      <PageHeader
+        title="Subscription"
+        description="Trial lasts 3 days. Choose a plan to continue after that."
+      />
 
       {tenant ? (
-        <div className="card">
+        <div className="card bg-gradient-to-br from-white to-indigo-50/60">
           <p className="text-sm text-[var(--ink-muted)]">Current status</p>
           <p className="mt-1 text-lg font-semibold text-[var(--navy)]">
             {tenant.subscription_plan.replaceAll("_", " ")} ·{" "}
@@ -120,7 +124,12 @@ export default function SubscriptionPage() {
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {plans.map((plan) => (
-          <div key={plan.id} className="card flex flex-col">
+          <div
+            key={plan.id}
+            className={`card flex flex-col ${
+              plan.id === "PRO_YEARLY" ? "ring-2 ring-[var(--navy)]" : ""
+            }`}
+          >
             <h2 className="font-display text-xl text-[var(--navy)]">{plan.name}</h2>
             <p className="mt-2 text-2xl font-semibold">
               {plan.price_nrs == null
