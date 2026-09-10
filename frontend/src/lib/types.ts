@@ -43,6 +43,12 @@ export type SubscriptionPlan = {
   subscribeable: boolean;
 };
 
+export type Category = {
+  id: number;
+  name: string;
+  created_at: string;
+};
+
 export type Product = {
   id: number;
   category: number | null;
@@ -94,11 +100,21 @@ export type Invoice = {
   updated_at: string;
 };
 
+export type StockMovement = {
+  id: number;
+  product: number;
+  product_name: string;
+  movement_type: "IN" | "OUT" | string;
+  quantity: number;
+  reason: string;
+  created_at: string;
+};
+
 export type DashboardData = {
   total_products: number;
   total_customers: number;
   total_invoices: number;
-  total_revenue: string;
+  total_revenue: string | number;
   low_stock_products: Array<{
     id: number;
     name: string;
@@ -106,4 +122,129 @@ export type DashboardData = {
     low_stock_threshold: number;
   }>;
   recent_invoices: Invoice[];
+};
+
+export type ReportsData = {
+  top_products: Array<{
+    name: string;
+    total_qty: number;
+    total_revenue: number;
+  }>;
+  status_breakdown: Array<{
+    status: string;
+    count: number;
+    total: number;
+  }>;
+  total_revenue: number;
+  monthly_revenue: Array<{
+    month: string;
+    revenue: number;
+  }>;
+};
+
+export type HealthMetric = {
+  label: string;
+  score: number;
+  max: number;
+  detail: string;
+  icon: string;
+  color: string;
+};
+
+export type HealthData = {
+  total_score: number;
+  grade: string;
+  grade_color: string;
+  grade_icon: string;
+  breakdown: Record<string, HealthMetric>;
+};
+
+export type ForecastData = {
+  historical_labels: string[];
+  historical_data: number[];
+  forecast_labels: string[];
+  forecast_data: number[];
+  total_forecast: number;
+  avg_daily_forecast: number;
+  trend: "UP" | "DOWN" | string;
+  trend_value: number;
+};
+
+export type ABCItem = {
+  product_name: string;
+  revenue: number;
+  qty_sold: number;
+  abc_class: "A" | "B" | "C" | string;
+  revenue_pct: number;
+  cumulative_pct: number;
+};
+
+export type ABCData = {
+  items: ABCItem[];
+  total_revenue: number;
+  a_revenue: number;
+  b_revenue: number;
+  c_revenue: number;
+  a_count: number;
+  b_count: number;
+  c_count: number;
+};
+
+export type TrendItem = {
+  product_name: string;
+  recent_7d: number;
+  previous_7d: number;
+  change_pct: number;
+  trend: "UP" | "DOWN" | "STABLE" | string;
+};
+
+export type StockRiskItem = {
+  product_name: string;
+  stock_quantity: number;
+  avg_daily_sales: number;
+  days_until_stockout: number | null;
+  risk: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | string;
+  recommended_restock: number;
+};
+
+export type ReorderPlanItem = {
+  product_name: string;
+  avg_daily_sales: number;
+  safety_stock: number;
+  reorder_point: number;
+  current_stock: number;
+  order_qty: number;
+  estimated_cost: number;
+  needs_order_now: boolean;
+};
+
+export type WeeklyOrderItem = {
+  product_name: string;
+  stock_quantity: number;
+  reorder_point: number;
+  order_qty: number;
+  estimated_cost: number;
+};
+
+export type WeeklyOrdersData = {
+  items: WeeklyOrderItem[];
+  total_items: number;
+  total_estimated_cost: number;
+};
+
+export type CategorySummaryItem = {
+  category: string;
+  total_qty: number;
+  total_revenue: number;
+};
+
+export type AIInsightsData = {
+  health: HealthData;
+  forecast: ForecastData | null;
+  abc: ABCData;
+  trends: TrendItem[];
+  stock_risk: StockRiskItem[];
+  reorder_plan: ReorderPlanItem[];
+  weekly_orders: WeeklyOrdersData;
+  category_summary: CategorySummaryItem[];
 };

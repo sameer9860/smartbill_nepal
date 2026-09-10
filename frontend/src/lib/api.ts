@@ -1,9 +1,13 @@
 import type {
+  AIInsightsData,
   AuthResponse,
+  Category,
   Customer,
   DashboardData,
   Invoice,
   Product,
+  ReportsData,
+  StockMovement,
   SubscriptionPlan,
   User,
 } from "./types";
@@ -146,27 +150,85 @@ export const authApi = {
   me() {
     return apiRequest<User>("/api/auth/me/");
   },
+  updateProfile(payload: {
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+  }) {
+    return apiRequest<User>("/api/auth/profile/", {
+      method: "PUT",
+      body: payload,
+    });
+  },
+  changePassword(payload: { old_password: string; new_password: string }) {
+    return apiRequest<{ message: string }>("/api/auth/change-password/", {
+      method: "POST",
+      body: payload,
+    });
+  },
+  deleteAccount() {
+    return apiRequest<{ message: string }>("/api/auth/delete-account/", {
+      method: "DELETE",
+    });
+  },
 };
 
 export const coreApi = {
-  dashboard() {
-    return apiRequest<DashboardData>("/api/dashboard/");
+  categories() {
+    return apiRequest<Category[]>("/api/categories/");
   },
+  createCategory(payload: { name: string }) {
+    return apiRequest<Category>("/api/categories/", {
+      method: "POST",
+      body: payload,
+    });
+  },
+  updateCategory(id: number, payload: { name: string }) {
+    return apiRequest<Category>(`/api/categories/${id}/`, {
+      method: "PUT",
+      body: payload,
+    });
+  },
+  deleteCategory(id: number) {
+    return apiRequest<void>(`/api/categories/${id}/`, { method: "DELETE" });
+  },
+
   products() {
     return apiRequest<Product[]>("/api/products/");
   },
   createProduct(payload: {
     name: string;
-    price: string;
+    price: string | number;
     stock_quantity: number;
     low_stock_threshold?: number;
     description?: string;
+    category?: number | null;
   }) {
     return apiRequest<Product>("/api/products/", {
       method: "POST",
       body: payload,
     });
   },
+  updateProduct(
+    id: number,
+    payload: {
+      name: string;
+      price: string | number;
+      stock_quantity: number;
+      low_stock_threshold?: number;
+      description?: string;
+      category?: number | null;
+    }
+  ) {
+    return apiRequest<Product>(`/api/products/${id}/`, {
+      method: "PUT",
+      body: payload,
+    });
+  },
+  deleteProduct(id: number) {
+    return apiRequest<void>(`/api/products/${id}/`, { method: "DELETE" });
+  },
+
   customers() {
     return apiRequest<Customer[]>("/api/customers/");
   },
@@ -181,21 +243,73 @@ export const coreApi = {
       body: payload,
     });
   },
+  updateCustomer(
+    id: number,
+    payload: {
+      full_name: string;
+      phone: string;
+      email?: string;
+      address?: string;
+    }
+  ) {
+    return apiRequest<Customer>(`/api/customers/${id}/`, {
+      method: "PUT",
+      body: payload,
+    });
+  },
+  deleteCustomer(id: number) {
+    return apiRequest<void>(`/api/customers/${id}/`, { method: "DELETE" });
+  },
+
   invoices() {
     return apiRequest<Invoice[]>("/api/invoices/");
+  },
+  invoice(id: number) {
+    return apiRequest<Invoice>(`/api/invoices/${id}/`);
   },
   createInvoice(payload: {
     customer: number;
     status?: string;
-    discount?: string;
-    tax?: string;
+    discount?: string | number;
+    tax?: string | number;
     notes?: string;
-    items: Array<{ product: number; quantity: number; unit_price?: string }>;
+    items: Array<{ product: number; quantity: number; unit_price?: string | number }>;
   }) {
     return apiRequest<Invoice>("/api/invoices/", {
       method: "POST",
       body: payload,
     });
+  },
+  deleteInvoice(id: number) {
+    return apiRequest<void>(`/api/invoices/${id}/`, { method: "DELETE" });
+  },
+
+  stockMovements() {
+    return apiRequest<StockMovement[]>("/api/stock-movements/");
+  },
+  createStockMovement(payload: {
+    product: number;
+    movement_type: "IN" | "OUT";
+    quantity: number;
+    reason?: string;
+  }) {
+    return apiRequest<StockMovement>("/api/stock-movements/", {
+      method: "POST",
+      body: payload,
+    });
+  },
+
+  lowStockProducts() {
+    return apiRequest<Product[]>("/api/low-stock/");
+  },
+  dashboard() {
+    return apiRequest<DashboardData>("/api/dashboard/");
+  },
+  reports() {
+    return apiRequest<ReportsData>("/api/reports/");
+  },
+  aiInsights() {
+    return apiRequest<AIInsightsData>("/api/ai-insights/");
   },
   subscriptionPlans() {
     return apiRequest<{ plans: SubscriptionPlan[] }>(
@@ -218,3 +332,9 @@ export const coreApi = {
     });
   },
 };
+
+export function formatNpr(value: string | number | null | undefined) {
+  const n = Number(value ?? 0);
+  if (Number.isNaN(n)) return "NPR 0";
+  return `NPR ${n.toLocaleString("en-NP", { maximumFractionDigits: 2 })}`;
+}
