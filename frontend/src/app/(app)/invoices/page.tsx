@@ -1,175 +1,164 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-import { ApiError, coreApi } from "@/lib/api";
-import type { Customer, Invoice, Product } from "@/lib/types";
+import { EmptyState } from "@/components/EmptyState";
+import { ExpiredGate } from "@/components/ExpiredGate";
+import { LoadingPage } from "@/components/LoadingCard";
+import { Modal } from "@/components/Modal";
+import { PageHeader } from "@/components/PageHeader";
+import { StatusBadge } from "@/components/StatusBadge";
+import { ApiError, coreApi, formatNpr } from "@/lib/api";
+import type { Invoice } from "@/lib/types";
 
 export default function InvoicesPage() {
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [items, setItems] = useState<Invoice[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [expired, setExpired] = useState(false);
   const [error, setError] = useState("");
-  const [form, setForm] = useState({
-    customer: "",
-    product: "",
-    quantity: "1",
-    status: "UNPAID",
-  });
-  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState<Invoice | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  async function load() {
+  const load = useCallback(async () => {
     try {
-      const [inv, cust, prod] = await Promise.all([
-        coreApi.invoices(),
-        coreApi.customers(),
-        coreApi.products(),
-      ]);
-      setInvoices(inv);
-      setCustomers(cust);
-      setProducts(prod);
+      setItems(await coreApi.invoices());
       setError("");
     } catch (err) {
-      if (err instanceof ApiError && err.status === 402) {
-        setError("Trial expired. Subscribe to continue.");
-      } else {
-        setError(err instanceof Error ? err.message : "Failed to load invoices");
-      }
+      if (err instanceof ApiError && err.status === 402) setExpired(true);
+      else setError(err instanceof Error ? err.message : "Failed to load");
+    } finally {
+      setLoading(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
-  async function onCreate(e: FormEvent) {
-    e.preventDefault();
-    if (!form.customer || !form.product) return;
-    setSaving(true);
+  async function confirmDelete() {
+    if (!deleting) return;
+    setBusy(true);
     try {
-      const product = products.find((p) => p.id === Number(form.product));
-      await coreApi.createInvoice({
-        customer: Number(form.customer),
-        status: form.status,
-        items: [
-          {
-            product: Number(form.product),
-            quantity: Number(form.quantity) || 1,
-            unit_price: product?.price,
-          },
-        ],
-      });
-      setForm({ customer: "", product: "", quantity: "1", status: "UNPAID" });
+      await coreApi.deleteInvoice(deleting.id);
+      setDeleting(null);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not create invoice");
+      if (err instanceof ApiError && err.status === 402) setExpired(true);
+      else setError(err instanceof ApiError ? err.message : "Delete failed");
     } finally {
-      setSaving(false);
+      setBusy(false);
     }
   }
 
-  if (error.includes("Trial expired")) {
-    return (
-      <div className="card border-amber-200 bg-amber-50">
-        <p className="font-medium text-amber-950">{error}</p>
-        <Link href="/subscription" className="btn-primary mt-4 inline-flex">
-          View plans
-        </Link>
-      </div>
-    );
-  }
+  if (expired) return <ExpiredGate />;
+  if (loading) return <LoadingPage label="Loading invoices…" />;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-3xl text-[var(--navy)]">Invoices</h1>
-        <p className="mt-1 text-sm text-[var(--ink-muted)]">
-          Create bills with Nepal VAT defaults
-        </p>
-      </div>
+      <PageHeader
+        title="Invoices"
+        description="Create and manage sales invoices"
+        actions={
+          <Link href="/invoices/create" className="btn-primary">
+            Create invoice
+          </Link>
+        }
+      />
 
-      <form onSubmit={onCreate} className="card grid gap-3 md:grid-cols-5">
-        <select
-          className="input"
-          value={form.customer}
-          onChange={(e) => setForm({ ...form, customer: e.target.value })}
-          required
-        >
-          <option value="">Customer</option>
-          {customers.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.full_name}
-            </option>
-          ))}
-        </select>
-        <select
-          className="input"
-          value={form.product}
-          onChange={(e) => setForm({ ...form, product: e.target.value })}
-          required
-        >
-          <option value="">Product</option>
-          {products.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
-        <input
-          className="input"
-          type="number"
-          min="1"
-          value={form.quantity}
-          onChange={(e) => setForm({ ...form, quantity: e.target.value })}
+      {error ? (
+        <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+      ) : null}
+
+      {items.length === 0 ? (
+        <EmptyState
+          title="No invoices yet"
+          description="Create your first invoice to track sales."
+          action={
+            <Link href="/invoices/create" className="btn-primary">
+              Create invoice
+            </Link>
+          }
         />
-        <select
-          className="input"
-          value={form.status}
-          onChange={(e) => setForm({ ...form, status: e.target.value })}
-        >
-          <option value="UNPAID">Unpaid</option>
-          <option value="PAID">Paid</option>
-          <option value="PARTIAL">Partial</option>
-        </select>
-        <button type="submit" className="btn-primary" disabled={saving}>
-          {saving ? "Creating…" : "Create invoice"}
-        </button>
-      </form>
-
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
-
-      <div className="card overflow-x-auto p-0">
-        <table className="min-w-full text-left text-sm">
-          <thead className="border-b border-[var(--line)] bg-[var(--surface)] text-[var(--ink-muted)]">
-            <tr>
-              <th className="px-4 py-3 font-medium">Invoice</th>
-              <th className="px-4 py-3 font-medium">Customer</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {invoices.map((inv) => (
-              <tr key={inv.id} className="border-b border-[var(--line)] last:border-0">
-                <td className="px-4 py-3 font-medium">#{inv.invoice_number}</td>
-                <td className="px-4 py-3">{inv.customer_name}</td>
-                <td className="px-4 py-3">{inv.status}</td>
-                <td className="px-4 py-3">
-                  NPR {Number(inv.grand_total).toLocaleString()}
-                </td>
-              </tr>
-            ))}
-            {invoices.length === 0 ? (
+      ) : (
+        <div className="card overflow-x-auto p-0">
+          <table className="w-full min-w-[720px] text-left text-sm">
+            <thead className="border-b border-[var(--line)] bg-[var(--surface)] text-[var(--ink-muted)]">
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-[var(--ink-muted)]">
-                  No invoices yet.
-                </td>
+                <th className="px-4 py-3 font-medium">Invoice</th>
+                <th className="px-4 py-3 font-medium">Customer</th>
+                <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">Total</th>
+                <th className="px-4 py-3 font-medium">Date</th>
+                <th className="px-4 py-3 font-medium">Actions</th>
               </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {items.map((inv) => (
+                <tr key={inv.id} className="border-b border-[var(--line)] last:border-0">
+                  <td className="px-4 py-3 font-medium">#{inv.invoice_number}</td>
+                  <td className="px-4 py-3">{inv.customer_name}</td>
+                  <td className="px-4 py-3">
+                    <StatusBadge status={inv.status} />
+                  </td>
+                  <td className="px-4 py-3">{formatNpr(inv.grand_total)}</td>
+                  <td className="px-4 py-3 text-[var(--ink-muted)]">
+                    {new Date(inv.created_at).toLocaleDateString()}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-wrap gap-2">
+                      <Link
+                        href={`/invoices/${inv.id}`}
+                        className="text-sm text-[var(--navy-2)] hover:underline"
+                      >
+                        View
+                      </Link>
+                      <Link
+                        href={`/invoices/${inv.id}/print`}
+                        className="text-sm text-[var(--navy-2)] hover:underline"
+                      >
+                        Print
+                      </Link>
+                      <button
+                        type="button"
+                        className="text-sm text-red-600 hover:underline"
+                        onClick={() => setDeleting(inv)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <Modal
+        open={!!deleting}
+        onClose={() => setDeleting(null)}
+        title="Delete invoice"
+        danger
+      >
+        <p className="text-sm text-[var(--ink-muted)]">
+          Delete invoice <strong>#{deleting?.invoice_number}</strong>? This cannot
+          be undone.
+        </p>
+        <div className="mt-4 flex justify-end gap-2">
+          <button type="button" className="btn-secondary" onClick={() => setDeleting(null)}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="rounded-md bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+            disabled={busy}
+            onClick={() => void confirmDelete()}
+          >
+            {busy ? "Deleting…" : "Delete"}
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }
