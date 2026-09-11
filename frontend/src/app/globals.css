@@ -6,14 +6,15 @@
 
 :root {
   --navy: #1a237e;
+  --navy-dark: #0f172a;
   --navy-2: #1565c0;
-  --ink: #1c2434;
-  --ink-muted: #5b6577;
-  --surface: #f3f5f9;
-  --surface-2: #e8ecf4;
-  --line: #d5dbe8;
+  --ink: #0f172a;
+  --ink-muted: #64748b;
+  --surface: #f8fafc;
+  --surface-2: #f1f5f9;
+  --line: #e2e8f0;
   --card: #ffffff;
-  --accent: #0f766e;
+  --accent: #0d9488;
   --font-display: "Fraunces", Georgia, serif;
   --font-body: "Source Sans 3", "Segoe UI", sans-serif;
 }
@@ -22,6 +23,7 @@ body {
   color: var(--ink);
   background: var(--surface);
   font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
 }
 
 .font-display {
@@ -29,21 +31,38 @@ body {
 }
 
 .btn-primary {
-  @apply inline-flex items-center justify-center rounded-md bg-[var(--navy)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#283593] disabled:cursor-not-allowed disabled:opacity-60;
+  @apply inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[var(--navy)] to-[#283593] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:opacity-95 hover:shadow focus:outline-none focus:ring-2 focus:ring-[var(--navy-2)] disabled:cursor-not-allowed disabled:opacity-60;
 }
 
 .btn-secondary {
-  @apply inline-flex items-center justify-center rounded-md border border-[var(--line)] bg-white px-4 py-2.5 text-sm font-medium text-[var(--ink)] transition hover:bg-[var(--surface-2)];
+  @apply inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--line)] bg-white px-4 py-2.5 text-sm font-medium text-[var(--ink)] shadow-sm transition-all hover:bg-[var(--surface-2)] focus:outline-none focus:ring-2 focus:ring-slate-300 disabled:cursor-not-allowed disabled:opacity-60;
 }
 
 .input {
-  @apply w-full rounded-md border border-[var(--line)] bg-white px-3 py-2.5 text-sm outline-none transition focus:border-[var(--navy-2)] focus:ring-2 focus:ring-sky-200;
+  @apply w-full rounded-lg border border-[var(--line)] bg-white px-3.5 py-2.5 text-sm text-[var(--ink)] placeholder-[var(--ink-muted)] outline-none transition focus:border-[var(--navy-2)] focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-100 disabled:cursor-not-allowed;
 }
 
 .card {
-  @apply rounded-xl border border-[var(--line)] bg-[var(--card)] p-5 shadow-sm;
+  @apply rounded-2xl border border-[var(--line)] bg-[var(--card)] p-6 shadow-sm transition-all hover:shadow-md;
 }
 
 .label {
-  @apply mb-1.5 block text-sm font-medium text-[var(--ink)];
+  @apply mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--ink-muted)];
 }
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
