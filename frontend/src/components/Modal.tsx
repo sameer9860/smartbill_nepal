@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { X } from "lucide-react";
 
 type ModalProps = {
   open: boolean;
@@ -39,24 +40,24 @@ export function Modal({
       <button
         type="button"
         aria-label="Close dialog"
-        className="absolute inset-0 bg-black/40"
+        className="absolute inset-0 bg-slate-950/50 backdrop-blur-xs transition-opacity"
         onClick={onClose}
       />
       <div
         role="dialog"
         aria-modal="true"
-        className={`relative z-10 max-h-[90vh] w-full overflow-y-auto rounded-xl border border-[var(--line)] bg-white shadow-xl ${
+        className={`relative z-10 max-h-[90vh] w-full overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl transition-all ${
           wide ? "max-w-2xl" : "max-w-lg"
         }`}
       >
         <div
-          className={`flex items-center justify-between border-b border-[var(--line)] px-5 py-4 ${
-            danger ? "bg-red-50" : ""
+          className={`flex items-center justify-between border-b border-slate-100 px-6 py-4 ${
+            danger ? "bg-red-50/60" : "bg-slate-50/50"
           }`}
         >
           <h2
-            className={`font-display text-xl ${
-              danger ? "text-red-800" : "text-[var(--navy)]"
+            className={`font-display text-lg font-bold ${
+              danger ? "text-red-800" : "text-slate-900"
             }`}
           >
             {title}
@@ -64,13 +65,14 @@ export function Modal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md px-2 py-1 text-sm text-[var(--ink-muted)] hover:bg-[var(--surface-2)]"
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-200/60 hover:text-slate-600 transition"
           >
-            ✕
+            <X className="h-4 w-4" />
           </button>
         </div>
-        <div className="px-5 py-4">{children}</div>
+        <div className="px-6 py-5">{children}</div>
       </div>
     </div>
   );
 }
+
