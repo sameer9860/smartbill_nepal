@@ -283,6 +283,21 @@ export const coreApi = {
   deleteInvoice(id: number) {
     return apiRequest<void>(`/api/invoices/${id}/`, { method: "DELETE" });
   },
+  updateInvoice(
+    id: number,
+    payload: {
+      customer?: number;
+      status?: string;
+      discount?: string | number;
+      tax?: string | number;
+      notes?: string;
+    }
+  ) {
+    return apiRequest<Invoice>(`/api/invoices/${id}/`, {
+      method: "PATCH",
+      body: payload,
+    });
+  },
 
   stockMovements() {
     return apiRequest<StockMovement[]>("/api/stock-movements/");
