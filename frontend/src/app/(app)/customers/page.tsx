@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Mail, MapPin, Pencil, Phone, Trash2, UserPlus } from "lucide-react";
 
 import { EmptyState } from "@/components/EmptyState";
 import { ExpiredGate } from "@/components/ExpiredGate";
@@ -59,7 +60,8 @@ export default function CustomersPage() {
     return items.filter(
       (c) =>
         c.full_name.toLowerCase().includes(q) ||
-        (c.phone || "").toLowerCase().includes(q)
+        (c.phone || "").toLowerCase().includes(q) ||
+        (c.email || "").toLowerCase().includes(q)
     );
   }, [items, query]);
 
@@ -120,183 +122,260 @@ export default function CustomersPage() {
   }
 
   if (expired) return <ExpiredGate />;
-  if (loading) return <LoadingPage label="Loading customers…" />;
+  if (loading) return <LoadingPage label="Loading customer directory…" />;
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Customers"
-        description="Manage your customer directory"
+        title="Customer Directory"
+        description="Manage customer profiles, phone numbers, and invoicing records"
         actions={
           <button type="button" className="btn-primary" onClick={openCreate}>
-            Add customer
+            <UserPlus className="h-4 w-4" />
+            <span>Add Customer</span>
           </button>
         }
       />
 
       {error ? (
-        <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">
+          {error}
+        </div>
       ) : null}
 
-      <SearchInput
-        value={query}
-        onChange={setQuery}
-        placeholder="Search by name or phone…"
-        className="max-w-md"
-      />
+      <div className="flex items-center justify-between gap-4">
+        <SearchInput
+          value={query}
+          onChange={setQuery}
+          placeholder="Search by customer name, phone, or email…"
+          className="w-full max-w-md"
+        />
+        <span className="hidden text-xs font-semibold text-slate-500 sm:inline">
+          Showing {filtered.length} of {items.length} customers
+        </span>
+      </div>
 
       {filtered.length === 0 ? (
         <EmptyState
           title="No customers found"
-          description="Add customers to link them on invoices."
+          description="Add customer profiles to quickly link them when generating invoices."
           action={
             <button type="button" className="btn-primary" onClick={openCreate}>
-              Add customer
+              <UserPlus className="h-4 w-4" />
+              <span>Add Customer</span>
             </button>
           }
         />
       ) : (
-        <div className="card overflow-x-auto p-0">
-          <table className="w-full min-w-[640px] text-left text-sm">
-            <thead className="border-b border-[var(--line)] bg-[var(--surface)] text-[var(--ink-muted)]">
-              <tr>
-                <th className="px-4 py-3 font-medium">Name</th>
-                <th className="px-4 py-3 font-medium">Phone</th>
-                <th className="px-4 py-3 font-medium">Email</th>
-                <th className="px-4 py-3 font-medium">Address</th>
-                <th className="px-4 py-3 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((c) => (
-                <tr key={c.id} className="border-b border-[var(--line)] last:border-0">
-                  <td className="px-4 py-3 font-medium">{c.full_name}</td>
-                  <td className="px-4 py-3">{c.phone}</td>
-                  <td className="px-4 py-3 text-[var(--ink-muted)]">
-                    {c.email || "—"}
-                  </td>
-                  <td className="px-4 py-3 text-[var(--ink-muted)]">
-                    {c.address || "—"}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        className="text-sm text-[var(--navy-2)] hover:underline"
-                        onClick={() => openEdit(c)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        className="text-sm text-red-600 hover:underline"
-                        onClick={() => {
-                          setEditing(c);
-                          setDeleteOpen(true);
-                        }}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
+        <div className="card overflow-hidden p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-slate-200 bg-slate-50/70 text-slate-500">
+                <tr>
+                  <th className="px-6 py-3.5 font-bold uppercase tracking-wider text-xs">Customer Name</th>
+                  <th className="px-6 py-3.5 font-bold uppercase tracking-wider text-xs">Phone Number</th>
+                  <th className="px-6 py-3.5 font-bold uppercase tracking-wider text-xs">Email</th>
+                  <th className="px-6 py-3.5 font-bold uppercase tracking-wider text-xs">Address</th>
+                  <th className="px-6 py-3.5 font-bold uppercase tracking-wider text-xs text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filtered.map((c) => {
+                  const initial = c.full_name ? c.full_name.charAt(0).toUpperCase() : "C";
+                  return (
+                    <tr key={c.id} className="transition hover:bg-slate-50/50">
+                      <td className="px-6 py-4 font-semibold text-slate-900">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white shadow-sm">
+                            {initial}
+                          </div>
+                          <span>{c.full_name}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 font-mono text-slate-700">
+                        {c.phone ? (
+                          <a
+                            href={`tel:${c.phone}`}
+                            className="inline-flex items-center gap-1 hover:text-indigo-600 hover:underline"
+                          >
+                            <Phone className="h-3.5 w-3.5 text-slate-400" />
+                            <span>{c.phone}</span>
+                          </a>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-slate-600">
+                        {c.email ? (
+                          <a
+                            href={`mailto:${c.email}`}
+                            className="inline-flex items-center gap-1 hover:text-indigo-600 hover:underline"
+                          >
+                            <Mail className="h-3.5 w-3.5 text-slate-400" />
+                            <span>{c.email}</span>
+                          </a>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-slate-600">
+                        {c.address ? (
+                          <div className="inline-flex items-center gap-1">
+                            <MapPin className="h-3.5 w-3.5 text-slate-400" />
+                            <span className="truncate max-w-xs">{c.address}</span>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+                            onClick={() => openEdit(c)}
+                          >
+                            <Pencil className="h-3.5 w-3.5 text-slate-500" />
+                            <span>Edit</span>
+                          </button>
+                          <button
+                            type="button"
+                            className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50/50 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-100"
+                            onClick={() => {
+                              setEditing(c);
+                              setDeleteOpen(true);
+                            }}
+                          >
+                            <Trash2 className="h-3.5 w-3.5 text-red-600" />
+                            <span>Delete</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
+      {/* Form Modal */}
       <Modal
         open={formOpen}
         onClose={() => setFormOpen(false)}
-        title={editing ? "Edit customer" : "Add customer"}
+        title={editing ? "Edit Customer" : "Add New Customer"}
         wide
       >
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <label className="label" htmlFor="cust-name">
-              Full name
-            </label>
-            <input
-              id="cust-name"
-              className="input"
-              value={form.full_name}
-              onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-            />
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void saveCustomer();
+          }}
+          className="space-y-4"
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="label" htmlFor="cust-name">
+                Full Name *
+              </label>
+              <input
+                id="cust-name"
+                className="input"
+                value={form.full_name}
+                onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+                placeholder="e.g. Ram Kumar Shrestha"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="label" htmlFor="cust-phone">
+                Phone Number *
+              </label>
+              <input
+                id="cust-phone"
+                className="input"
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                placeholder="e.g. 9841000000"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="label" htmlFor="cust-email">
+                Email Address (Optional)
+              </label>
+              <input
+                id="cust-email"
+                type="email"
+                className="input"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                placeholder="e.g. ram@example.com"
+              />
+            </div>
+
+            <div>
+              <label className="label" htmlFor="cust-address">
+                Address / City (Optional)
+              </label>
+              <input
+                id="cust-address"
+                className="input"
+                value={form.address}
+                onChange={(e) => setForm({ ...form, address: e.target.value })}
+                placeholder="e.g. New Road, Kathmandu"
+              />
+            </div>
           </div>
-          <div>
-            <label className="label" htmlFor="cust-phone">
-              Phone
-            </label>
-            <input
-              id="cust-phone"
-              className="input"
-              value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
-            />
+
+          <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+            <button type="button" className="btn-secondary" onClick={() => setFormOpen(false)}>
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={busy || !form.full_name.trim() || !form.phone.trim()}
+            >
+              {busy ? "Saving…" : "Save Customer"}
+            </button>
           </div>
-          <div>
-            <label className="label" htmlFor="cust-email">
-              Email
-            </label>
-            <input
-              id="cust-email"
-              type="email"
-              className="input"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-            />
-          </div>
-          <div>
-            <label className="label" htmlFor="cust-address">
-              Address
-            </label>
-            <input
-              id="cust-address"
-              className="input"
-              value={form.address}
-              onChange={(e) => setForm({ ...form, address: e.target.value })}
-            />
-          </div>
-        </div>
-        <div className="mt-4 flex justify-end gap-2">
-          <button type="button" className="btn-secondary" onClick={() => setFormOpen(false)}>
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="btn-primary"
-            disabled={busy || !form.full_name.trim() || !form.phone.trim()}
-            onClick={() => void saveCustomer()}
-          >
-            {busy ? "Saving…" : "Save"}
-          </button>
-        </div>
+        </form>
       </Modal>
 
+      {/* Delete Confirmation Modal */}
       <Modal
         open={deleteOpen}
         onClose={() => setDeleteOpen(false)}
-        title="Delete customer"
+        title="Delete Customer"
         danger
       >
-        <p className="text-sm text-[var(--ink-muted)]">
-          Delete <strong>{editing?.full_name}</strong>? This cannot be undone.
-        </p>
-        <div className="mt-4 flex justify-end gap-2">
-          <button type="button" className="btn-secondary" onClick={() => setDeleteOpen(false)}>
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="rounded-md bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
-            disabled={busy}
-            onClick={() => void confirmDelete()}
-          >
-            {busy ? "Deleting…" : "Delete"}
-          </button>
+        <div className="space-y-3">
+          <p className="text-sm text-slate-600">
+            Are you sure you want to delete customer <strong>{editing?.full_name}</strong>?
+          </p>
+          <p className="text-xs text-red-700 bg-red-50 p-3 rounded-lg border border-red-200">
+            This action cannot be undone. Previous invoices linked to this customer will retain their record.
+          </p>
+          <div className="flex justify-end gap-2 pt-2">
+            <button type="button" className="btn-secondary" onClick={() => setDeleteOpen(false)}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60 transition"
+              disabled={busy}
+              onClick={() => void confirmDelete()}
+            >
+              {busy ? "Deleting…" : "Delete Customer"}
+            </button>
+          </div>
         </div>
       </Modal>
     </div>
   );
 }
+
