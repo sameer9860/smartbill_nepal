@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { FolderTree, Pencil, Plus, Trash2 } from "lucide-react";
 
 import { EmptyState } from "@/components/EmptyState";
 import { ExpiredGate } from "@/components/ExpiredGate";
@@ -95,139 +96,180 @@ export default function CategoriesPage() {
   }
 
   if (expired) return <ExpiredGate />;
-  if (loading) return <LoadingPage label="Loading categories…" />;
+  if (loading) return <LoadingPage label="Loading product categories…" />;
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Categories"
-        description="Organize products into categories"
+        description="Organize your store products into structured groups"
         actions={
           <button type="button" className="btn-primary" onClick={openCreate}>
-            Add category
+            <Plus className="h-4 w-4" />
+            <span>Add Category</span>
           </button>
         }
       />
 
       {error ? (
-        <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">
+          {error}
+        </div>
       ) : null}
 
-      <SearchInput
-        value={query}
-        onChange={setQuery}
-        placeholder="Search categories…"
-        className="max-w-md"
-      />
+      <div className="flex items-center justify-between gap-4">
+        <SearchInput
+          value={query}
+          onChange={setQuery}
+          placeholder="Search categories by name…"
+          className="w-full max-w-md"
+        />
+        <span className="hidden text-xs font-semibold text-slate-500 sm:inline">
+          Showing {filtered.length} of {items.length} categories
+        </span>
+      </div>
 
       {filtered.length === 0 ? (
         <EmptyState
           title="No categories found"
-          description="Create a category to group your products."
+          description="Create categories like 'Electronics', 'Groceries', or 'Clothing' to group products."
           action={
             <button type="button" className="btn-primary" onClick={openCreate}>
-              Add category
+              <Plus className="h-4 w-4" />
+              <span>Add Category</span>
             </button>
           }
         />
       ) : (
-        <div className="card overflow-x-auto p-0">
-          <table className="w-full min-w-[480px] text-left text-sm">
-            <thead className="border-b border-[var(--line)] bg-[var(--surface)] text-[var(--ink-muted)]">
-              <tr>
-                <th className="px-4 py-3 font-medium">Name</th>
-                <th className="px-4 py-3 font-medium">Created</th>
-                <th className="px-4 py-3 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((cat) => (
-                <tr key={cat.id} className="border-b border-[var(--line)] last:border-0">
-                  <td className="px-4 py-3 font-medium">{cat.name}</td>
-                  <td className="px-4 py-3 text-[var(--ink-muted)]">
-                    {new Date(cat.created_at).toLocaleDateString()}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        className="text-sm text-[var(--navy-2)] hover:underline"
-                        onClick={() => openEdit(cat)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        className="text-sm text-red-600 hover:underline"
-                        onClick={() => {
-                          setEditing(cat);
-                          setDeleteOpen(true);
-                        }}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
+        <div className="card overflow-hidden p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-slate-200 bg-slate-50/70 text-slate-500">
+                <tr>
+                  <th className="px-6 py-3.5 font-bold uppercase tracking-wider text-xs">Category Name</th>
+                  <th className="px-6 py-3.5 font-bold uppercase tracking-wider text-xs">Created Date</th>
+                  <th className="px-6 py-3.5 font-bold uppercase tracking-wider text-xs text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filtered.map((cat) => (
+                  <tr key={cat.id} className="transition hover:bg-slate-50/50">
+                    <td className="px-6 py-4 font-semibold text-slate-900">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700">
+                          <FolderTree className="h-4 w-4" />
+                        </div>
+                        <span>{cat.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-slate-500">
+                      {new Date(cat.created_at).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+                          onClick={() => openEdit(cat)}
+                        >
+                          <Pencil className="h-3.5 w-3.5 text-slate-500" />
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50/50 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-100"
+                          onClick={() => {
+                            setEditing(cat);
+                            setDeleteOpen(true);
+                          }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5 text-red-600" />
+                          <span>Delete</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       <Modal
         open={formOpen}
         onClose={() => setFormOpen(false)}
-        title={editing ? "Edit category" : "Add category"}
+        title={editing ? "Edit Category" : "Add New Category"}
       >
-        <label className="label" htmlFor="cat-name">
-          Name
-        </label>
-        <input
-          id="cat-name"
-          className="input"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. Electronics"
-        />
-        <div className="mt-4 flex justify-end gap-2">
-          <button type="button" className="btn-secondary" onClick={() => setFormOpen(false)}>
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="btn-primary"
-            disabled={busy || !name.trim()}
-            onClick={() => void saveCategory()}
-          >
-            {busy ? "Saving…" : "Save"}
-          </button>
-        </div>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void saveCategory();
+          }}
+          className="space-y-4"
+        >
+          <div>
+            <label className="label" htmlFor="cat-name">
+              Category Name *
+            </label>
+            <input
+              id="cat-name"
+              className="input"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Beverages & Drinks"
+              autoFocus
+              required
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <button type="button" className="btn-secondary" onClick={() => setFormOpen(false)}>
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={busy || !name.trim()}
+            >
+              {busy ? "Saving…" : "Save Category"}
+            </button>
+          </div>
+        </form>
       </Modal>
 
       <Modal
         open={deleteOpen}
         onClose={() => setDeleteOpen(false)}
-        title="Delete category"
+        title="Delete Category"
         danger
       >
-        <p className="text-sm text-[var(--ink-muted)]">
-          Delete <strong>{editing?.name}</strong>? This cannot be undone.
-        </p>
-        <div className="mt-4 flex justify-end gap-2">
-          <button type="button" className="btn-secondary" onClick={() => setDeleteOpen(false)}>
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="rounded-md bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
-            disabled={busy}
-            onClick={() => void confirmDelete()}
-          >
-            {busy ? "Deleting…" : "Delete"}
-          </button>
+        <div className="space-y-3">
+          <p className="text-sm text-slate-600">
+            Are you sure you want to delete <strong>{editing?.name}</strong>?
+          </p>
+          <p className="text-xs text-amber-800 bg-amber-50 p-3 rounded-lg border border-amber-200">
+            Products assigned to this category will not be deleted, but will become uncategorized.
+          </p>
+          <div className="flex justify-end gap-2 pt-3">
+            <button type="button" className="btn-secondary" onClick={() => setDeleteOpen(false)}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
+              disabled={busy}
+              onClick={() => void confirmDelete()}
+            >
+              {busy ? "Deleting…" : "Delete Category"}
+            </button>
+          </div>
         </div>
       </Modal>
     </div>
   );
 }
+
