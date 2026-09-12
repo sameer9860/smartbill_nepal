@@ -5,10 +5,8 @@ import {
   Building2,
   CheckCircle2,
   KeyRound,
-  Mail,
   Shield,
   Trash2,
-  User2,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -172,16 +170,13 @@ export default function ProfilePage() {
               <label className="label" htmlFor="first_name">
                 First Name
               </label>
-              <div className="relative">
-                <User2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ink-muted)]" />
-                <input
-                  id="first_name"
-                  className="input pl-9"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  placeholder="Your first name"
-                />
-              </div>
+              <input
+                id="first_name"
+                className="input"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="Your first name"
+              />
             </div>
 
             {/* Last Name */}
@@ -189,16 +184,13 @@ export default function ProfilePage() {
               <label className="label" htmlFor="last_name">
                 Last Name
               </label>
-              <div className="relative">
-                <User2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ink-muted)]" />
-                <input
-                  id="last_name"
-                  className="input pl-9"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  placeholder="Your last name"
-                />
-              </div>
+              <input
+                id="last_name"
+                className="input"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder="Your last name"
+              />
             </div>
 
             {/* Email */}
@@ -206,33 +198,25 @@ export default function ProfilePage() {
               <label className="label" htmlFor="email">
                 Email Address
               </label>
-              <div className="relative">
-                <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--ink-muted)]" />
-                <input
-                  id="email"
-                  type="email"
-                  className="input pl-9"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                />
-              </div>
+              <input
+                id="email"
+                type="email"
+                className="input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+              />
             </div>
 
             {/* Username – read-only */}
             <div className="sm:col-span-2">
               <label className="label">Username</label>
-              <div className="relative">
-                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-[var(--ink-muted)]">
-                  @
-                </span>
-                <input
-                  className="input cursor-not-allowed bg-[var(--surface-2)] pl-8 text-[var(--ink-muted)]"
-                  value={user.username}
-                  disabled
-                  readOnly
-                />
-              </div>
+              <input
+                className="input cursor-not-allowed bg-[var(--surface-2)] text-[var(--ink-muted)]"
+                value={user.username}
+                disabled
+                readOnly
+              />
               <p className="mt-1 text-xs text-[var(--ink-muted)]">
                 Username cannot be changed after account creation.
               </p>
