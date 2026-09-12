@@ -148,7 +148,7 @@ export default function InvoicesPage() {
         <SearchInput
           value={query}
           onChange={setQuery}
-          placeholder="Search invoice # or customer name…"
+          placeholder="Search invoice number or customer name…"
           className="w-full max-w-md"
         />
 
@@ -187,7 +187,8 @@ export default function InvoicesPage() {
             <table className="w-full text-left text-sm">
               <thead className="border-b border-slate-200 bg-slate-50/70 text-slate-500">
                 <tr>
-                  <th className="px-6 py-3.5 font-bold uppercase tracking-wider text-xs">Invoice #</th>
+                  <th className="px-4 py-3.5 font-bold uppercase tracking-wider text-xs w-12">S.N.</th>
+                  <th className="px-6 py-3.5 font-bold uppercase tracking-wider text-xs">Invoice No.</th>
                   <th className="px-6 py-3.5 font-bold uppercase tracking-wider text-xs">Customer</th>
                   <th className="px-6 py-3.5 font-bold uppercase tracking-wider text-xs">Status</th>
                   <th className="px-6 py-3.5 font-bold uppercase tracking-wider text-xs">Grand Total</th>
@@ -196,10 +197,13 @@ export default function InvoicesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filtered.map((inv) => (
+                {filtered.map((inv, index) => (
                   <tr key={inv.id} className="transition hover:bg-slate-50/50">
+                    <td className="px-4 py-4 text-xs font-semibold text-slate-500">
+                      {index + 1}
+                    </td>
                     <td className="px-6 py-4 font-mono font-bold text-indigo-900">
-                      #{inv.invoice_number}
+                      {inv.invoice_number}
                     </td>
                     <td className="px-6 py-4 font-semibold text-slate-900">
                       {inv.customer_name}

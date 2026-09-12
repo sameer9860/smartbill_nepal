@@ -335,7 +335,7 @@ export default function DashboardPage() {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-xs font-bold text-indigo-900">
-                          #{inv.invoice_number}
+                          {inv.invoice_number}
                         </span>
                         <StatusBadge status={inv.status} />
                       </div>

@@ -260,6 +260,7 @@ export default function ProductsPage() {
             <table className="w-full text-left text-sm">
               <thead className="border-b border-slate-200 bg-slate-50/70 text-slate-500">
                 <tr>
+                  <th className="px-4 py-3.5 font-bold uppercase tracking-wider text-xs w-12">S.N.</th>
                   <th className="px-6 py-3.5 font-bold uppercase tracking-wider text-xs">Product Details</th>
                   <th className="px-6 py-3.5 font-bold uppercase tracking-wider text-xs">Category</th>
                   <th className="px-6 py-3.5 font-bold uppercase tracking-wider text-xs">Unit Price</th>
@@ -269,8 +270,11 @@ export default function ProductsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filtered.map((p) => (
+                {filtered.map((p, index) => (
                   <tr key={p.id} className="transition hover:bg-slate-50/50">
+                    <td className="px-4 py-4 text-xs font-semibold text-slate-500">
+                      {index + 1}
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex items-start gap-3">
                         <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-700">

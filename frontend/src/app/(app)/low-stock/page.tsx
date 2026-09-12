@@ -110,6 +110,7 @@ export default function LowStockPage() {
               <table className="w-full text-left text-sm">
                 <thead className="border-b border-slate-200 bg-slate-50/70 text-slate-500">
                   <tr>
+                    <th className="px-4 py-3.5 font-bold uppercase tracking-wider text-xs w-12">S.N.</th>
                     <th className="px-6 py-3.5 font-bold uppercase tracking-wider text-xs">Product Details</th>
                     <th className="px-6 py-3.5 font-bold uppercase tracking-wider text-xs">Category</th>
                     <th className="px-6 py-3.5 font-bold uppercase tracking-wider text-xs">Unit Price</th>
@@ -120,10 +121,13 @@ export default function LowStockPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {items.map((p) => {
+                  {items.map((p, index) => {
                     const deficit = Math.max(0, p.low_stock_threshold - p.stock_quantity);
                     return (
                       <tr key={p.id} className="transition hover:bg-slate-50/50">
+                        <td className="px-4 py-4 text-xs font-semibold text-slate-500">
+                          {index + 1}
+                        </td>
                         <td className="px-6 py-4 font-bold text-slate-900">{p.name}</td>
                         <td className="px-6 py-4 text-slate-600">
                           {p.category_name ? (

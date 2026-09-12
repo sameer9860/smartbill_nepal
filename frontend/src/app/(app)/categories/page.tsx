@@ -146,14 +146,18 @@ export default function CategoriesPage() {
             <table className="w-full text-left text-sm">
               <thead className="border-b border-slate-200 bg-slate-50/70 text-slate-500">
                 <tr>
+                  <th className="px-4 py-3.5 font-bold uppercase tracking-wider text-xs w-12">S.N.</th>
                   <th className="px-6 py-3.5 font-bold uppercase tracking-wider text-xs">Category Name</th>
                   <th className="px-6 py-3.5 font-bold uppercase tracking-wider text-xs">Created Date</th>
                   <th className="px-6 py-3.5 font-bold uppercase tracking-wider text-xs text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filtered.map((cat) => (
+                {filtered.map((cat, index) => (
                   <tr key={cat.id} className="transition hover:bg-slate-50/50">
+                    <td className="px-4 py-4 text-xs font-semibold text-slate-500">
+                      {index + 1}
+                    </td>
                     <td className="px-6 py-4 font-semibold text-slate-900">
                       <div className="flex items-center gap-3">
                         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700">

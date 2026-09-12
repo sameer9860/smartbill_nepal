@@ -63,7 +63,7 @@ export default function InvoiceDetailPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={`Invoice #${invoice.invoice_number}`}
+        title={`Invoice ${invoice.invoice_number}`}
         description={`Issued on ${new Date(invoice.created_at).toLocaleString("en-US", {
           year: "numeric",
           month: "short",
@@ -113,7 +113,7 @@ export default function InvoiceDetailPage() {
             <table className="w-full text-left text-sm">
               <thead className="border-b border-slate-200 bg-slate-50/70 text-slate-500">
                 <tr>
-                  <th className="px-4 py-3 font-bold uppercase tracking-wider text-xs">#</th>
+                  <th className="px-4 py-3 font-bold uppercase tracking-wider text-xs">S.N.</th>
                   <th className="px-4 py-3 font-bold uppercase tracking-wider text-xs">Product Item</th>
                   <th className="px-4 py-3 font-bold uppercase tracking-wider text-xs">Qty</th>
                   <th className="px-4 py-3 font-bold uppercase tracking-wider text-xs">Unit Price</th>

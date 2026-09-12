@@ -219,7 +219,8 @@ export default function ReportsPage() {
               <table className="w-full text-left text-sm">
                 <thead className="border-b border-[var(--line)] bg-[var(--surface-2)] text-[var(--ink-muted)]">
                   <tr>
-                    <th className="px-3 py-2 font-semibold">Rank & Product</th>
+                    <th className="px-3 py-2 font-semibold w-12 text-xs">S.N.</th>
+                    <th className="px-3 py-2 font-semibold">Product</th>
                     <th className="px-3 py-2 font-semibold">Qty Sold</th>
                     <th className="px-3 py-2 font-semibold text-right">Revenue</th>
                   </tr>
@@ -227,10 +228,10 @@ export default function ReportsPage() {
                 <tbody className="divide-y divide-[var(--line)]">
                   {data.top_products.map((p, idx) => (
                     <tr key={p.name} className="hover:bg-[var(--surface-2)]/50">
+                      <td className="px-3 py-2.5 text-xs font-semibold text-slate-500">
+                        {idx + 1}
+                      </td>
                       <td className="px-3 py-2.5 font-medium text-[var(--navy)]">
-                        <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-indigo-50 text-[10px] font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-                          #{idx + 1}
-                        </span>
                         {p.name}
                       </td>
                       <td className="px-3 py-2.5 font-semibold text-[var(--ink)]">

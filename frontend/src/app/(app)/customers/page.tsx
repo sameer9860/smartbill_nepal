@@ -172,6 +172,7 @@ export default function CustomersPage() {
             <table className="w-full text-left text-sm">
               <thead className="border-b border-slate-200 bg-slate-50/70 text-slate-500">
                 <tr>
+                  <th className="px-4 py-3.5 font-bold uppercase tracking-wider text-xs w-12">S.N.</th>
                   <th className="px-6 py-3.5 font-bold uppercase tracking-wider text-xs">Customer Name</th>
                   <th className="px-6 py-3.5 font-bold uppercase tracking-wider text-xs">Phone Number</th>
                   <th className="px-6 py-3.5 font-bold uppercase tracking-wider text-xs">Email</th>
@@ -180,10 +181,13 @@ export default function CustomersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filtered.map((c) => {
+                {filtered.map((c, index) => {
                   const initial = c.full_name ? c.full_name.charAt(0).toUpperCase() : "C";
                   return (
                     <tr key={c.id} className="transition hover:bg-slate-50/50">
+                      <td className="px-4 py-4 text-xs font-semibold text-slate-500">
+                        {index + 1}
+                      </td>
                       <td className="px-6 py-4 font-semibold text-slate-900">
                         <div className="flex items-center gap-3">
                           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white shadow-sm">

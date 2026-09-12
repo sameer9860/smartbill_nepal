@@ -74,7 +74,7 @@ export default function InvoicePrintPage() {
         </div>
         <div className="text-right">
           <p className="text-xl font-extrabold tracking-tight text-slate-900">TAX INVOICE</p>
-          <p className="font-mono text-sm font-bold text-indigo-900">#{invoice.invoice_number}</p>
+          <p className="font-mono text-sm font-bold text-indigo-900">{invoice.invoice_number}</p>
           <p className="text-xs text-slate-500 mt-0.5">
             Date: {new Date(invoice.created_at).toLocaleDateString("en-US", {
               year: "numeric",

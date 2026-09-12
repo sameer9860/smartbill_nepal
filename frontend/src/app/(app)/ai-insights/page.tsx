@@ -210,6 +210,7 @@ export default function AIInsightsPage() {
                 <table className="w-full text-left text-sm">
                   <thead className="sticky top-0 bg-[var(--surface)] text-[var(--ink-muted)]">
                     <tr>
+                      <th className="px-2 py-2 font-medium w-10">S.N.</th>
                       <th className="px-2 py-2 font-medium">Product</th>
                       <th className="px-2 py-2 font-medium">Stock</th>
                       <th className="px-2 py-2 font-medium">Reorder at</th>
@@ -218,11 +219,12 @@ export default function AIInsightsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {data.weekly_orders.items.map((w) => (
+                    {data.weekly_orders.items.map((w, idx) => (
                       <tr
                         key={w.product_name}
                         className="border-t border-[var(--line)] bg-amber-50/40"
                       >
+                        <td className="px-2 py-2 text-xs font-semibold text-slate-500">{idx + 1}</td>
                         <td className="px-2 py-2 font-medium">{w.product_name}</td>
                         <td className="px-2 py-2">{w.stock_quantity}</td>
                         <td className="px-2 py-2">{w.reorder_point}</td>
@@ -365,14 +367,16 @@ export default function AIInsightsPage() {
             <table className="w-full min-w-[420px] text-left text-sm">
               <thead className="text-[var(--ink-muted)]">
                 <tr>
+                  <th className="py-2 font-medium w-10">S.N.</th>
                   <th className="py-2 font-medium">Product</th>
                   <th className="py-2 font-medium">Change</th>
                   <th className="py-2 font-medium">Trend</th>
                 </tr>
               </thead>
               <tbody>
-                {data.trends.map((t) => (
+                {data.trends.map((t, idx) => (
                   <tr key={t.product_name} className="border-t border-[var(--line)]">
+                    <td className="py-2 text-xs font-semibold text-slate-500">{idx + 1}</td>
                     <td className="py-2">{t.product_name}</td>
                     <td className="py-2">{t.change_pct}%</td>
                     <td className="py-2">
@@ -394,6 +398,7 @@ export default function AIInsightsPage() {
           <table className="w-full min-w-[720px] text-left text-sm">
             <thead className="text-[var(--ink-muted)]">
               <tr>
+                <th className="px-2 py-2 font-medium w-10">S.N.</th>
                 <th className="px-2 py-2 font-medium">Product</th>
                 <th className="px-2 py-2 font-medium">Stock</th>
                 <th className="px-2 py-2 font-medium">Avg daily</th>
@@ -403,8 +408,9 @@ export default function AIInsightsPage() {
               </tr>
             </thead>
             <tbody>
-              {data.stock_risk.map((r) => (
+              {data.stock_risk.map((r, idx) => (
                 <tr key={r.product_name} className="border-t border-[var(--line)]">
+                  <td className="px-2 py-2 text-xs font-semibold text-slate-500">{idx + 1}</td>
                   <td className="px-2 py-2 font-medium">{r.product_name}</td>
                   <td className="px-2 py-2">{r.stock_quantity}</td>
                   <td className="px-2 py-2">{r.avg_daily_sales}</td>
@@ -430,6 +436,7 @@ export default function AIInsightsPage() {
           <table className="w-full min-w-[800px] text-left text-sm">
             <thead className="text-[var(--ink-muted)]">
               <tr>
+                <th className="px-2 py-2 font-medium w-10">S.N.</th>
                 <th className="px-2 py-2 font-medium">Product</th>
                 <th className="px-2 py-2 font-medium">Current</th>
                 <th className="px-2 py-2 font-medium">Reorder point</th>
@@ -440,13 +447,14 @@ export default function AIInsightsPage() {
               </tr>
             </thead>
             <tbody>
-              {data.reorder_plan.map((r) => (
+              {data.reorder_plan.map((r, idx) => (
                 <tr
                   key={r.product_name}
                   className={`border-t border-[var(--line)] ${
                     r.needs_order_now ? "bg-amber-50" : ""
                   }`}
                 >
+                  <td className="px-2 py-2 text-xs font-semibold text-slate-500">{idx + 1}</td>
                   <td className="px-2 py-2 font-medium">{r.product_name}</td>
                   <td className="px-2 py-2">{r.current_stock}</td>
                   <td className="px-2 py-2">{r.reorder_point}</td>
@@ -473,6 +481,7 @@ export default function AIInsightsPage() {
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="text-[var(--ink-muted)]">
               <tr>
+                <th className="px-2 py-2 font-medium w-10">S.N.</th>
                 <th className="px-2 py-2 font-medium">Product</th>
                 <th className="px-2 py-2 font-medium">Class</th>
                 <th className="px-2 py-2 font-medium">Revenue</th>
@@ -481,8 +490,9 @@ export default function AIInsightsPage() {
               </tr>
             </thead>
             <tbody>
-              {data.abc.items.map((item) => (
+              {data.abc.items.map((item, idx) => (
                 <tr key={item.product_name} className="border-t border-[var(--line)]">
+                  <td className="px-2 py-2 text-xs font-semibold text-slate-500">{idx + 1}</td>
                   <td className="px-2 py-2">{item.product_name}</td>
                   <td className="px-2 py-2">
                     <StatusBadge status={item.abc_class} />

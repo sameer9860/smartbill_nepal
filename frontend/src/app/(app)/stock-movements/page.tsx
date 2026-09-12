@@ -270,6 +270,7 @@ export default function StockMovementsPage() {
             <table className="w-full text-left text-sm">
               <thead className="border-b border-[var(--line)] bg-[var(--surface-2)] text-[var(--ink-muted)]">
                 <tr>
+                  <th className="px-4 py-3.5 font-semibold w-12 text-xs">S.N.</th>
                   <th className="px-5 py-3.5 font-semibold">Date & Time</th>
                   <th className="px-5 py-3.5 font-semibold">Product Name</th>
                   <th className="px-5 py-3.5 font-semibold">Direction</th>
@@ -278,7 +279,7 @@ export default function StockMovementsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--line)]">
-                {filteredItems.map((m) => {
+                {filteredItems.map((m, index) => {
                   const dateStr = new Date(m.created_at).toLocaleString("en-US", {
                     dateStyle: "medium",
                     timeStyle: "short",
@@ -289,6 +290,9 @@ export default function StockMovementsPage() {
                       key={m.id}
                       className="transition-colors hover:bg-[var(--surface-2)]/50"
                     >
+                      <td className="px-4 py-3.5 text-xs font-semibold text-slate-500">
+                        {index + 1}
+                      </td>
                       <td className="whitespace-nowrap px-5 py-3.5 text-xs text-[var(--ink-muted)]">
                         {dateStr}
                       </td>
