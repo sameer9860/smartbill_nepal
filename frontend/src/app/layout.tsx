@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description:
     "Billing, inventory, and business management for Nepali SMEs — with a 3-day free trial.",
   icons: {
-    icon: "/favicon.ico",
+    icon: "/icon.png",
   },
 };
 
