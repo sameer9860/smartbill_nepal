@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   title: "SmartBill Nepal",
   description:
     "Billing, inventory, and business management for Nepali SMEs — with a 3-day free trial.",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
