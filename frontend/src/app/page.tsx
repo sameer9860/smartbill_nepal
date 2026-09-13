@@ -2,257 +2,245 @@ import {
   ArrowRight,
   BarChart3,
   CheckCircle2,
-  PackageCheck,
+  Package,
   Printer,
   Receipt,
-  ShieldCheck,
+  Shield,
   Sparkles,
   Users,
-  Zap,
 } from "lucide-react";
 import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-slate-950 text-white selection:bg-indigo-500 selection:text-white">
-      {/* Background Decorators */}
+    <div className="min-h-screen bg-[#070b14] text-slate-100 font-sans selection:bg-blue-600 selection:text-white">
+      {/* Background Subtle Gradient & Grid */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-40 -left-40 h-[500px] w-[500px] rounded-full bg-gradient-to-br from-indigo-600/30 to-purple-600/0 blur-[120px]" />
-        <div className="absolute top-1/3 -right-40 h-[500px] w-[500px] rounded-full bg-gradient-to-br from-sky-500/20 to-indigo-600/0 blur-[140px]" />
-        <div className="absolute -bottom-40 left-1/3 h-[500px] w-[500px] rounded-full bg-gradient-to-br from-emerald-500/15 to-sky-600/0 blur-[140px]" />
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 h-[600px] w-[800px] rounded-full bg-blue-600/10 blur-[150px]" />
         <div
-          className="absolute inset-0 opacity-[0.03]"
+          className="absolute inset-0 opacity-[0.02]"
           style={{
             backgroundImage:
-              "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
+              "url(\"data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='1' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E\")",
           }}
         />
       </div>
 
-      {/* Navigation Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl border-b border-white/10 bg-slate-950/70">
+      {/* Header Navigation */}
+      <header className="sticky top-0 z-50 border-b border-slate-800/80 bg-[#070b14]/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 text-white shadow-lg shadow-indigo-500/25 transition group-hover:scale-105">
+          <Link href="/" className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-600/20">
               <Receipt className="h-5 w-5" />
             </div>
             <div>
               <span className="font-display text-xl font-bold tracking-tight text-white">
-                SmartBill <span className="text-red-500 font-sans text-xs uppercase tracking-widest">Nepal</span>
+                SmartBill <span className="text-blue-500">Nepal</span>
               </span>
-              <p className="text-[10px] text-slate-400">Next-Gen Business OS</p>
             </div>
           </Link>
 
-          <nav className="hidden items-center gap-8 md:flex text-sm font-medium text-slate-300">
-            <a href="#features" className="transition hover:text-white">Features</a>
-            <a href="#ai" className="transition hover:text-white">AI Insights</a>
-            <a href="#pricing" className="transition hover:text-white">Pricing</a>
-          </nav>
-
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <Link
               href="/login"
-              className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-300 transition hover:bg-white/10 hover:text-white"
+              className="text-sm font-semibold text-slate-300 transition hover:text-white"
             >
               Sign In
             </Link>
             <Link
               href="/register"
-              className="group relative inline-flex items-center justify-center overflow-hidden rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-indigo-600/30 transition duration-300 hover:bg-indigo-500 hover:shadow-indigo-500/40"
+              className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-500"
             >
-              <span>Start Free Trial</span>
-              <ArrowRight className="ml-1.5 h-4 w-4 transition group-hover:translate-x-1" />
+              Start Free Trial
             </Link>
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="relative mx-auto max-w-7xl px-6 pt-16 pb-24 text-center md:pt-24 md:pb-32">
-        <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-4 py-1.5 text-xs font-semibold text-indigo-300 backdrop-blur-md mb-8 animate-fade-in">
-          <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span>🇳🇵 Built Specifically for Nepali SMEs & Retail Stores</span>
+      <section className="relative mx-auto max-w-7xl px-6 pt-16 pb-20 text-center md:pt-24 md:pb-28">
+        {/* Sub-badge */}
+        <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1.5 text-xs font-semibold text-blue-400 mb-8">
+          <span className="h-2 w-2 rounded-full bg-blue-500" />
+          Billing & Stock Software Built for Nepali SMEs
         </div>
 
-        <h1 className="mx-auto max-w-4xl font-display text-4xl font-extrabold tracking-tight text-white sm:text-6xl md:text-7xl lg:leading-[1.1]">
-          Modern Billing, Stock Control &{" "}
-          <span className="bg-gradient-to-r from-indigo-400 via-sky-300 to-emerald-400 bg-clip-text text-transparent">
-            AI Sales Intelligence
-          </span>
+        {/* Hero Title */}
+        <h1 className="mx-auto max-w-4xl text-4xl font-extrabold tracking-tight text-white sm:text-6xl md:text-6xl lg:leading-[1.15]">
+          Simplify Invoicing, Inventory & Sales in{" "}
+          <span className="text-blue-500">Nepali Rupees</span>
         </h1>
 
-        <p className="mx-auto mt-6 max-w-2xl text-base text-slate-400 sm:text-lg md:text-xl font-normal leading-relaxed">
-          Manage invoices in NPR, track low-stock inventory, generate thermal receipts, and forecast demand with AI. Includes a 3-day full access trial.
+        {/* Subtitle */}
+        <p className="mx-auto mt-6 max-w-2xl text-base text-slate-400 sm:text-lg leading-relaxed">
+          Generate NPR tax invoices, print thermal receipts, manage low-stock thresholds, and get AI sales predictions. Starts with a 3-day full access trial.
         </p>
 
+        {/* Action Buttons */}
         <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
           <Link
             href="/register"
-            className="group flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-sky-600 px-7 py-4 text-base font-bold text-white shadow-xl shadow-indigo-600/25 transition duration-300 hover:scale-[1.02] hover:shadow-indigo-600/40"
+            className="flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3.5 text-base font-bold text-white shadow-lg shadow-blue-600/25 transition hover:bg-blue-500 hover:shadow-blue-500/40"
           >
-            <Zap className="h-5 w-5 fill-current text-amber-300" />
             <span>Start 3-Day Free Trial</span>
-            <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
+            <ArrowRight className="h-4 w-4" />
           </Link>
           <Link
             href="/login"
-            className="flex items-center justify-center gap-2 rounded-2xl border border-slate-800 bg-slate-900/80 px-7 py-4 text-base font-bold text-slate-200 backdrop-blur-md transition hover:border-slate-700 hover:bg-slate-800 hover:text-white"
+            className="flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900 px-6 py-3.5 text-base font-bold text-slate-200 transition hover:border-slate-700 hover:bg-slate-800 hover:text-white"
           >
-            <span>Existing Account Log In</span>
+            <span>Sign In to Dashboard</span>
           </Link>
         </div>
 
-        {/* Feature Badges */}
-        <div className="mt-12 flex flex-wrap items-center justify-center gap-6 text-xs font-semibold text-slate-400">
-          <div className="flex items-center gap-1.5">
-            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-            <span>No Credit Card Required</span>
+        {/* Key Points */}
+        <div className="mt-12 flex flex-wrap items-center justify-center gap-8 text-xs font-semibold text-slate-400">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-blue-500" />
+            <span>NPR Currency & Tax Invoices</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-            <span>Instant NPR Thermal & Tax Invoice</span>
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-blue-500" />
+            <span>80mm Thermal Receipt Printing</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-            <span>99.9% Cloud Uptime</span>
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-blue-500" />
+            <span>AI Low Stock Alerts & Demand Forecast</span>
           </div>
         </div>
 
-        {/* Mock Interface Graphic */}
-        <div className="relative mx-auto mt-16 max-w-5xl rounded-3xl border border-white/10 bg-slate-900/60 p-3 shadow-2xl backdrop-blur-2xl">
-          <div className="overflow-hidden rounded-2xl border border-white/5 bg-slate-950 p-6 text-left">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-              <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-red-500/80" />
-                <div className="h-3 w-3 rounded-full bg-amber-500/80" />
-                <div className="h-3 w-3 rounded-full bg-emerald-500/80" />
-                <span className="ml-2 font-mono text-xs text-slate-500">smartbill.nepal / dashboard</span>
-              </div>
-              <span className="rounded-full bg-indigo-500/20 px-2.5 py-0.5 text-[11px] font-semibold text-indigo-300 border border-indigo-500/30">
-                LIVE DEMO PREVIEW
-              </span>
+        {/* UI Mockup Dashboard Preview */}
+        <div className="relative mx-auto mt-16 max-w-5xl rounded-2xl border border-slate-800 bg-slate-900/90 p-4 text-left shadow-2xl backdrop-blur-xl">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div className="flex items-center gap-2">
+              <div className="h-3 w-3 rounded-full bg-slate-700" />
+              <div className="h-3 w-3 rounded-full bg-slate-700" />
+              <div className="h-3 w-3 rounded-full bg-slate-700" />
+              <span className="ml-2 font-mono text-xs text-slate-500">smartbill.nepal / dashboard</span>
             </div>
+            <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-0.5 text-[11px] font-semibold text-blue-400">
+              System Interface
+            </span>
+          </div>
 
-            <div className="mt-6 grid gap-4 sm:grid-cols-3">
-              <div className="rounded-xl border border-slate-800 bg-slate-900/90 p-4">
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Sales (NPR)</p>
-                <p className="mt-2 text-2xl font-extrabold text-emerald-400">रु 2,45,800.00</p>
-                <p className="mt-1 text-xs text-emerald-500/80 font-medium">↑ +14.2% this month</p>
-              </div>
-              <div className="rounded-xl border border-slate-800 bg-slate-900/90 p-4">
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Invoices Issued</p>
-                <p className="mt-2 text-2xl font-extrabold text-white">1,248</p>
-                <p className="mt-1 text-xs text-indigo-400 font-medium">98.4% Paid on time</p>
-              </div>
-              <div className="rounded-xl border border-slate-800 bg-slate-900/90 p-4">
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Low Stock Risk</p>
-                <p className="mt-2 text-2xl font-extrabold text-amber-400">3 Items</p>
-                <p className="mt-1 text-xs text-amber-500/80 font-medium">Smart AI restock active</p>
-              </div>
+          <div className="mt-4 grid gap-4 sm:grid-cols-3">
+            <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Sales (NPR)</p>
+              <p className="mt-2 text-2xl font-extrabold text-white">रु 1,84,500.00</p>
+              <p className="mt-1 text-xs text-blue-400">Paid Invoices: 42</p>
+            </div>
+            <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Inventory Products</p>
+              <p className="mt-2 text-2xl font-extrabold text-white">156 Items</p>
+              <p className="mt-1 text-xs text-slate-400">Active stock tracking</p>
+            </div>
+            <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Low Stock Alerts</p>
+              <p className="mt-2 text-2xl font-extrabold text-blue-400">2 Items</p>
+              <p className="mt-1 text-xs text-blue-400">Restock recommended</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Feature Grid */}
-      <section id="features" className="relative border-t border-white/10 bg-slate-900/40 py-24 backdrop-blur-lg">
+      {/* Feature Section */}
+      <section className="border-t border-slate-800/80 bg-slate-950 py-20">
         <div className="mx-auto max-w-7xl px-6">
           <div className="text-center">
-            <h2 className="font-display text-3xl font-bold tracking-tight text-white sm:text-4xl">
-              Everything Your Shop Needs To Thrive
+            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+              Core Platform Features
             </h2>
-            <p className="mt-3 text-base text-slate-400 max-w-2xl mx-auto">
-              Eliminate paper receipts, avoid unexpected stockouts, and gain full visibility into customer balances and daily revenue.
+            <p className="mt-3 text-sm text-slate-400 max-w-xl mx-auto">
+              Everything required to run your store efficiently without complex configuration.
             </p>
           </div>
 
-          <div className="mt-16 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {/* Card 1 */}
-            <div className="group rounded-3xl border border-white/10 bg-slate-900/60 p-8 transition duration-300 hover:border-indigo-500/40 hover:bg-slate-900/90 hover:shadow-xl hover:shadow-indigo-500/10">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600/20 text-indigo-400 ring-1 ring-indigo-500/30">
-                <Printer className="h-6 w-6" />
+          <div className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {/* 1 */}
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 transition hover:border-blue-500/40 hover:bg-slate-900">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30">
+                <Printer className="h-5 w-5" />
               </div>
-              <h3 className="mt-6 font-display text-xl font-bold text-white">Instant NPR Invoicing</h3>
-              <p className="mt-2 text-sm text-slate-400 leading-relaxed">
-                Create tax invoices in seconds. Support walk-in or saved customers, automatic VAT computation, and 80mm thermal receipt printing.
+              <h3 className="mt-4 text-lg font-bold text-white">NPR Tax Invoicing & Thermal Printing</h3>
+              <p className="mt-2 text-xs text-slate-400 leading-relaxed">
+                Generate tax invoices with optional VAT toggle, walk-in or saved customers, and instant 80mm thermal receipt output.
               </p>
             </div>
 
-            {/* Card 2 */}
-            <div className="group rounded-3xl border border-white/10 bg-slate-900/60 p-8 transition duration-300 hover:border-sky-500/40 hover:bg-slate-900/90 hover:shadow-xl hover:shadow-sky-500/10">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-600/20 text-sky-400 ring-1 ring-sky-500/30">
-                <PackageCheck className="h-6 w-6" />
+            {/* 2 */}
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 transition hover:border-blue-500/40 hover:bg-slate-900">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30">
+                <Package className="h-5 w-5" />
               </div>
-              <h3 className="mt-6 font-display text-xl font-bold text-white">Smart Inventory & Audit Log</h3>
-              <p className="mt-2 text-sm text-slate-400 leading-relaxed">
-                Track stock quantities, category groupings, and automatic stock deduction upon sales. Record stock IN/OUT audit logs.
+              <h3 className="mt-4 text-lg font-bold text-white">Stock Management & Movement Logs</h3>
+              <p className="mt-2 text-xs text-slate-400 leading-relaxed">
+                Automatic stock deduction upon sale creation, low-stock threshold notifications, and detailed IN/OUT stock audit logs.
               </p>
             </div>
 
-            {/* Card 3 */}
-            <div className="group rounded-3xl border border-white/10 bg-slate-900/60 p-8 transition duration-300 hover:border-amber-500/40 hover:bg-slate-900/90 hover:shadow-xl hover:shadow-amber-500/10">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-600/20 text-amber-400 ring-1 ring-amber-500/30">
-                <Sparkles className="h-6 w-6" />
+            {/* 3 */}
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 transition hover:border-blue-500/40 hover:bg-slate-900">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30">
+                <Sparkles className="h-5 w-5" />
               </div>
-              <h3 className="mt-6 font-display text-xl font-bold text-white">AI Sales Forecasting</h3>
-              <p className="mt-2 text-sm text-slate-400 leading-relaxed">
-                Built-in algorithms grade your business health score, perform ABC product classification, and generate automated weekly order plans.
+              <h3 className="mt-4 text-lg font-bold text-white">AI Demand Forecasting & ABC Analysis</h3>
+              <p className="mt-2 text-xs text-slate-400 leading-relaxed">
+                Smart analytics grade your store health, classify top-revenue ABC products, and provide automated weekly reorder suggestions.
               </p>
             </div>
 
-            {/* Card 4 */}
-            <div className="group rounded-3xl border border-white/10 bg-slate-900/60 p-8 transition duration-300 hover:border-emerald-500/40 hover:bg-slate-900/90 hover:shadow-xl hover:shadow-emerald-500/10">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600/20 text-emerald-400 ring-1 ring-emerald-500/30">
-                <Users className="h-6 w-6" />
+            {/* 4 */}
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 transition hover:border-blue-500/40 hover:bg-slate-900">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30">
+                <Users className="h-5 w-5" />
               </div>
-              <h3 className="mt-6 font-display text-xl font-bold text-white">Customer Directory</h3>
-              <p className="mt-2 text-sm text-slate-400 leading-relaxed">
-                Keep phone numbers, addresses, and full order histories for every client. Fast search with one-click direct calling.
+              <h3 className="mt-4 text-lg font-bold text-white">Customer Records</h3>
+              <p className="mt-2 text-xs text-slate-400 leading-relaxed">
+                Store customer phone numbers, addresses, and full purchasing history with quick search and one-tap direct dialing.
               </p>
             </div>
 
-            {/* Card 5 */}
-            <div className="group rounded-3xl border border-white/10 bg-slate-900/60 p-8 transition duration-300 hover:border-purple-500/40 hover:bg-slate-900/90 hover:shadow-xl hover:shadow-purple-500/10">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-600/20 text-purple-400 ring-1 ring-purple-500/30">
-                <BarChart3 className="h-6 w-6" />
+            {/* 5 */}
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 transition hover:border-blue-500/40 hover:bg-slate-900">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30">
+                <BarChart3 className="h-5 w-5" />
               </div>
-              <h3 className="mt-6 font-display text-xl font-bold text-white">Visual Analytics</h3>
-              <p className="mt-2 text-sm text-slate-400 leading-relaxed">
-                Interactive revenue charts, monthly sales summaries, top-selling product rankings, and real-time financial reporting.
+              <h3 className="mt-4 text-lg font-bold text-white">Financial Reports</h3>
+              <p className="mt-2 text-xs text-slate-400 leading-relaxed">
+                Track revenue trends over time, inspect product sales rankings, and download clean reports for accounting.
               </p>
             </div>
 
-            {/* Card 6 */}
-            <div className="group rounded-3xl border border-white/10 bg-slate-900/60 p-8 transition duration-300 hover:border-rose-500/40 hover:bg-slate-900/90 hover:shadow-xl hover:shadow-rose-500/10">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-600/20 text-rose-400 ring-1 ring-rose-500/30">
-                <ShieldCheck className="h-6 w-6" />
+            {/* 6 */}
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 transition hover:border-blue-500/40 hover:bg-slate-900">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30">
+                <Shield className="h-5 w-5" />
               </div>
-              <h3 className="mt-6 font-display text-xl font-bold text-white">Multi-Tenant Cloud Security</h3>
-              <p className="mt-2 text-sm text-slate-400 leading-relaxed">
-                Strict database isolation keeps your store data 100% private. JWT authentication with session control and encrypted storage.
+              <h3 className="mt-4 text-lg font-bold text-white">Multi-Tenant Isolation</h3>
+              <p className="mt-2 text-xs text-slate-400 leading-relaxed">
+                Each store operates in an isolated environment with encrypted JWT authentication and secure data protection.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section id="pricing" className="relative py-24">
+      {/* Trial CTA Banner */}
+      <section className="py-16">
         <div className="mx-auto max-w-5xl px-6">
-          <div className="relative overflow-hidden rounded-3xl border border-indigo-500/30 bg-gradient-to-br from-indigo-900/50 via-slate-900 to-indigo-950/80 p-10 text-center shadow-2xl backdrop-blur-xl md:p-16">
-            <h2 className="font-display text-3xl font-bold tracking-tight text-white sm:text-5xl">
-              Ready to Upgrade Your Shop?
+          <div className="rounded-2xl border border-blue-500/30 bg-gradient-to-r from-blue-950/80 via-slate-900 to-blue-950/80 p-10 text-center shadow-xl">
+            <h2 className="text-2xl font-bold text-white sm:text-3xl">
+              Get Started with SmartBill Nepal
             </h2>
-            <p className="mx-auto mt-4 max-w-xl text-base text-indigo-200/90">
-              Join store owners across Nepal streamlining their sales and stock management today.
+            <p className="mt-2 text-sm text-slate-300">
+              Create your account in less than a minute. Includes a 3-day free trial.
             </p>
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+            <div className="mt-6 flex justify-center">
               <Link
                 href="/register"
-                className="rounded-2xl bg-white px-8 py-4 text-base font-bold text-indigo-950 shadow-xl transition hover:bg-indigo-50 hover:scale-105"
+                className="rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/25 transition hover:bg-blue-500"
               >
-                Start Free 3-Day Trial
+                Start Free Trial Now
               </Link>
             </div>
           </div>
@@ -260,7 +248,7 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/10 bg-slate-950 py-8 text-center text-xs text-slate-500">
+      <footer className="border-t border-slate-800/80 bg-[#070b14] py-8 text-center text-xs text-slate-500">
         <p>© {new Date().getFullYear()} SmartBill Nepal. All rights reserved.</p>
       </footer>
     </div>

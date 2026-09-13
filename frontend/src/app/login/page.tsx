@@ -29,25 +29,17 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4 py-12 selection:bg-indigo-500 selection:text-white">
-      {/* Background Glow Elements */}
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#070b14] px-4 py-12 text-slate-100 selection:bg-blue-600 selection:text-white font-sans">
+      {/* Subtle Background Glow */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -left-40 h-[500px] w-[500px] rounded-full bg-gradient-to-br from-indigo-600/30 to-purple-600/0 blur-[120px]" />
-        <div className="absolute -bottom-40 -right-40 h-[500px] w-[500px] rounded-full bg-gradient-to-br from-sky-500/20 to-indigo-600/0 blur-[140px]" />
-        <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage:
-              "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
-          }}
-        />
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 h-[500px] w-[600px] rounded-full bg-blue-600/10 blur-[140px]" />
       </div>
 
       {/* Floating Back Button */}
       <div className="absolute top-6 left-6 z-10">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-slate-900/60 px-4 py-2 text-xs font-semibold text-slate-300 backdrop-blur-md transition hover:bg-slate-800 hover:text-white"
+          className="inline-flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/80 px-4 py-2 text-xs font-semibold text-slate-300 backdrop-blur-md transition hover:border-slate-700 hover:bg-slate-800 hover:text-white"
         >
           <ArrowLeft className="h-4 w-4" />
           <span>Back to Home</span>
@@ -56,18 +48,16 @@ export default function LoginPage() {
 
       {/* Floating Card Container */}
       <div className="relative z-10 w-full max-w-md">
-        <div className="overflow-hidden rounded-3xl border border-white/15 bg-slate-900/80 p-8 shadow-2xl backdrop-blur-2xl sm:p-10">
+        <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/90 p-8 shadow-2xl backdrop-blur-xl sm:p-10">
           {/* Brand Header */}
           <div className="text-center">
-            <Link href="/" className="inline-flex items-center gap-2 group">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 to-indigo-400 text-white shadow-lg shadow-indigo-500/30 transition group-hover:scale-105">
-                <Receipt className="h-6 w-6" />
+            <Link href="/" className="inline-flex items-center gap-2.5">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-600/20">
+                <Receipt className="h-5 w-5" />
               </div>
-              <div className="text-left">
-                <p className="font-display text-2xl font-bold tracking-tight text-white">
-                  SmartBill <span className="text-red-500 font-sans text-xs uppercase tracking-widest">Nepal</span>
-                </p>
-              </div>
+              <span className="font-display text-2xl font-bold tracking-tight text-white">
+                SmartBill <span className="text-blue-500">Nepal</span>
+              </span>
             </Link>
             <h1 className="mt-6 text-xl font-bold text-white tracking-tight">Sign in to your store</h1>
             <p className="mt-1 text-xs text-slate-400">Enter your credentials to access your dashboard</p>
@@ -75,7 +65,7 @@ export default function LoginPage() {
 
           {/* Error Banner */}
           {error ? (
-            <div className="mt-6 flex items-center gap-2.5 rounded-xl border border-red-500/30 bg-red-500/10 p-3.5 text-xs font-semibold text-red-300 backdrop-blur-md">
+            <div className="mt-6 flex items-center gap-2.5 rounded-xl border border-red-500/30 bg-red-500/10 p-3.5 text-xs font-semibold text-red-300">
               <AlertCircle className="h-4 w-4 shrink-0 text-red-400" />
               <span>{error}</span>
             </div>
@@ -92,7 +82,7 @@ export default function LoginPage() {
                 <input
                   id="username"
                   type="text"
-                  className="w-full rounded-xl border border-white/10 bg-slate-950/60 py-3 pl-10 pr-4 text-sm font-medium text-white placeholder-slate-500 transition focus:border-indigo-500 focus:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  className="w-full rounded-xl border border-slate-800 bg-slate-950 py-3 pl-10 pr-4 text-sm font-medium text-white placeholder-slate-500 transition focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="Enter your username"
@@ -111,7 +101,7 @@ export default function LoginPage() {
                 <input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  className="w-full rounded-xl border border-white/10 bg-slate-950/60 py-3 pl-10 pr-11 text-sm font-medium text-white placeholder-slate-500 transition focus:border-indigo-500 focus:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                  className="w-full rounded-xl border border-slate-800 bg-slate-950 py-3 pl-10 pr-11 text-sm font-medium text-white placeholder-slate-500 transition focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
@@ -136,16 +126,16 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 py-3.5 text-sm font-bold text-white shadow-lg shadow-indigo-600/30 transition duration-300 hover:from-indigo-500 hover:to-indigo-400 hover:shadow-indigo-500/40 disabled:opacity-60"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-500 disabled:opacity-60"
             >
               <span>{submitting ? "Signing in…" : "Sign In to Dashboard"}</span>
             </button>
           </form>
 
           {/* Footer Link */}
-          <div className="mt-6 text-center text-xs text-slate-400 border-t border-white/10 pt-5">
+          <div className="mt-6 text-center text-xs text-slate-400 border-t border-slate-800/80 pt-5">
             <span>Don&apos;t have a store account? </span>
-            <Link href="/register" className="font-bold text-indigo-400 hover:text-indigo-300 hover:underline">
+            <Link href="/register" className="font-bold text-blue-400 hover:text-blue-300 hover:underline">
               Start 3-Day Free Trial
             </Link>
           </div>
