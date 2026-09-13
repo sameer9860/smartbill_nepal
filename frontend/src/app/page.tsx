@@ -10,9 +10,7 @@ import {
   Printer,
   Receipt,
   ShieldCheck,
-  Zap,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -86,11 +84,6 @@ export default function HomePage() {
         <div className="grid items-center gap-12 lg:grid-cols-12">
           {/* Left Hero Text */}
           <div className="lg:col-span-7 text-left space-y-6">
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3.5 py-1.5 text-xs font-bold text-blue-700">
-              <Zap className="h-3.5 w-3.5 fill-current text-blue-600" />
-              <span>Nepal&apos;s #1 Retail & POS Billing Solution</span>
-            </div>
-
             <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl md:text-6xl leading-[1.15]">
               Manage Your Billing, Inventory & Sales in One Place
             </h1>
@@ -136,37 +129,67 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Right Hero Image Card */}
+          {/* Right Hero Interactive POS UI Mockup Card */}
           <div className="lg:col-span-5">
-            <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-3 shadow-2xl">
-              <Image
-                src="https://images.unsplash.com/photo-1556742049-0a67dd020d2d?q=80&w=1200&auto=format&fit=crop"
-                alt="Store owners collaborating on store billing and inventory"
-                width={600}
-                height={320}
-                unoptimized
-                className="h-80 w-full rounded-2xl object-cover"
-              />
-              <div className="p-4">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                  <div>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Live System Overview</p>
-                    <p className="text-sm font-bold text-slate-900">SmartBill POS & Inventory</p>
-                  </div>
-                  <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800">
-                    Active
-                  </span>
+            <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl">
+              {/* Card Window Top Bar */}
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 rounded-full bg-red-400" />
+                  <div className="h-3 w-3 rounded-full bg-amber-400" />
+                  <div className="h-3 w-3 rounded-full bg-emerald-400" />
+                  <span className="ml-2 font-mono text-xs font-semibold text-slate-400">POS & Inventory Suite</span>
                 </div>
-                <div className="mt-3 grid grid-cols-2 gap-3 text-center">
-                  <div className="rounded-xl bg-slate-50 p-2.5">
-                    <p className="text-[11px] font-semibold text-slate-500">Today Sales</p>
-                    <p className="text-base font-extrabold text-blue-600">रु 42,500</p>
+                <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700 border border-emerald-200">
+                  ● Live System
+                </span>
+              </div>
+
+              {/* System Stats Row */}
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3 text-left">
+                  <p className="text-[11px] font-semibold text-slate-500">Today Sales (NPR)</p>
+                  <p className="text-xl font-extrabold text-blue-600">रु 42,500.00</p>
+                  <p className="mt-0.5 text-[10px] font-bold text-emerald-600">↑ 18 Invoices Paid</p>
+                </div>
+                <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 text-left">
+                  <p className="text-[11px] font-semibold text-slate-500">Inventory Status</p>
+                  <p className="text-xl font-extrabold text-slate-900">156 Items</p>
+                  <p className="mt-0.5 text-[10px] font-bold text-amber-600">2 Low-Stock Alerts</p>
+                </div>
+              </div>
+
+              {/* Mock Invoice Items List */}
+              <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-left">
+                <div className="flex items-center justify-between text-xs font-bold text-slate-700 border-b border-slate-200/80 pb-2 mb-2">
+                  <span>Recent Sales Bill</span>
+                  <span className="font-mono text-[11px] text-blue-600 font-bold">INV-20260913-001</span>
+                </div>
+                <div className="space-y-1.5 text-xs text-slate-600">
+                  <div className="flex justify-between">
+                    <span>1x Wireless Barcode Scanner</span>
+                    <span className="font-semibold text-slate-900">रु 4,500.00</span>
                   </div>
-                  <div className="rounded-xl bg-slate-50 p-2.5">
-                    <p className="text-[11px] font-semibold text-slate-500">Invoices Printed</p>
-                    <p className="text-base font-extrabold text-slate-900">18 Bills</p>
+                  <div className="flex justify-between">
+                    <span>2x Thermal Receipt Paper Rolls</span>
+                    <span className="font-semibold text-slate-900">रु 600.00</span>
                   </div>
                 </div>
+                <div className="mt-3 flex items-center justify-between border-t border-slate-200/80 pt-2 text-xs">
+                  <span className="font-bold text-slate-900">Grand Total (Incl. VAT)</span>
+                  <span className="font-extrabold text-blue-600 text-sm">रु 5,763.00</span>
+                </div>
+              </div>
+
+              {/* Quick Action POS Pill */}
+              <div className="mt-4 flex items-center justify-between rounded-xl bg-slate-900 p-3 text-white">
+                <div className="flex items-center gap-2">
+                  <Printer className="h-4 w-4 text-blue-400" />
+                  <span className="text-xs font-bold">80mm Thermal Receipt Ready</span>
+                </div>
+                <span className="rounded-lg bg-blue-600 px-3 py-1 text-xs font-bold text-white shadow-sm">
+                  Print Bill
+                </span>
               </div>
             </div>
           </div>
