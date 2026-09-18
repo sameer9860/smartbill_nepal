@@ -15,6 +15,7 @@ import {
 import { ExpiredGate } from "@/components/ExpiredGate";
 import { LoadingPage } from "@/components/LoadingCard";
 import { PageHeader } from "@/components/PageHeader";
+import { SearchInput } from "@/components/SearchInput";
 import { ApiError, coreApi, formatNpr } from "@/lib/api";
 import type { Customer, Product } from "@/lib/types";
 
@@ -227,11 +228,10 @@ export default function CreateInvoicePage() {
             {customerType === "existing" ? (
               <div className="space-y-3">
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <input
-                    className="input"
+                  <SearchInput
                     placeholder="Search customer by name or phone…"
                     value={customerSearch}
-                    onChange={(e) => setCustomerSearch(e.target.value)}
+                    onChange={(val) => setCustomerSearch(val)}
                   />
                   <select
                     className="input"
