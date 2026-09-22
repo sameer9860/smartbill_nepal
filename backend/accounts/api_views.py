@@ -112,8 +112,32 @@ class ChangePasswordAPIView(APIView):
 
 class DeleteAccountAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+    CONFIRM_PHRASE = 'delete-my-account'
 
     def delete(self, request):
         user = request.user
+        password = request.data.get('password', '')
+        confirmation = request.data.get('confirmation', '')
+
+        if not password:
+            return Response(
+                {'detail': 'Password is required to delete your account.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not user.check_password(password):
+            return Response(
+                {'detail': 'Incorrect password.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if confirmation != self.CONFIRM_PHRASE:
+            return Response(
+                {
+                    'detail': f'Type "{self.CONFIRM_PHRASE}" to confirm account deletion.',
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         user.delete()
         return Response({'message': 'Account deleted successfully.'})

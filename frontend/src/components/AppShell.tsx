@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
   BarChart3,
+  ChevronDown,
   CreditCard,
   FileText,
   FolderTree,
@@ -14,6 +15,7 @@ import {
   LogOut,
   Menu,
   Package,
+  Settings,
   Sparkles,
   User,
   Users,
@@ -35,6 +37,7 @@ const NAV = [
   { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/ai-insights", label: "AI Insights", icon: Sparkles, highlight: true },
   { href: "/profile", label: "Profile", icon: User },
+  { href: "/settings", label: "Settings", icon: Settings },
   { href: "/subscription", label: "Plans", icon: CreditCard },
 ];
 
@@ -43,7 +46,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [lowStockCount, setLowStockCount] = useState<number | null>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -53,6 +58,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setMobileOpen(false);
+    setUserMenuOpen(false);
   }, [pathname]);
 
   useEffect(() => {
@@ -64,6 +70,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
   }, [user, pathname]);
 
+  useEffect(() => {
+    if (!userMenuOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setUserMenuOpen(false);
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [userMenuOpen]);
+
   if (loading || !user) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-900 text-slate-400">
@@ -74,6 +101,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
+
+  const displayName = user.first_name || user.username;
+  const initials =
+    user.first_name && user.last_name
+      ? `${user.first_name[0]}${user.last_name[0]}`.toUpperCase()
+      : user.username.slice(0, 2).toUpperCase();
 
   const navLinks = (
     <nav className="flex flex-1 flex-col gap-1 px-3 py-4 overflow-y-auto">
@@ -115,13 +148,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Link>
         );
       })}
+
+      <button
+        type="button"
+        onClick={logout}
+        className="group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-300 hover:bg-white/10 hover:text-red-300 transition-all"
+      >
+        <LogOut className="h-4 w-4 text-slate-400 transition-transform group-hover:scale-110 group-hover:text-red-400" />
+        <span>Sign out</span>
+      </button>
     </nav>
   );
-
-  const initials =
-    user.first_name && user.last_name
-      ? `${user.first_name[0]}${user.last_name[0]}`.toUpperCase()
-      : user.username.slice(0, 2).toUpperCase();
 
   return (
     <div className="min-h-screen bg-[var(--surface)] font-sans antialiased text-slate-800">
@@ -163,30 +200,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
 
         {navLinks}
-
-        <div className="border-t border-slate-800/80 p-4">
-          <div className="flex items-center justify-between rounded-xl bg-slate-800/60 p-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white">
-                {initials}
-              </div>
-              <div className="min-w-0 truncate">
-                <p className="truncate text-xs font-semibold text-white">
-                  {user.first_name || user.username}
-                </p>
-                <p className="truncate text-[10px] text-slate-400">{user.email || user.username}</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={logout}
-              title="Sign out"
-              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-700 hover:text-red-400 transition"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
       </aside>
 
       <div className="md:pl-64">
@@ -205,17 +218,76 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <span className="font-display font-bold text-slate-900">SmartBill</span>
               </div>
               <div className="hidden text-sm font-medium text-slate-500 md:block">
-                Welcome back, <span className="font-semibold text-slate-900">{user.first_name || user.username}</span>
+                Welcome back, <span className="font-semibold text-slate-900">{displayName}</span>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Link
-                href="/subscription"
-                className="inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-slate-800 transition"
+
+            <div className="relative" ref={userMenuRef}>
+              <button
+                type="button"
+                onClick={() => setUserMenuOpen((open) => !open)}
+                aria-expanded={userMenuOpen}
+                aria-haspopup="menu"
+                className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white py-1 pl-1 pr-2.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 transition"
               >
-                <CreditCard className="h-3.5 w-3.5 text-indigo-400" />
-                <span>Plans</span>
-              </Link>
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white">
+                  {initials}
+                </span>
+                <span className="hidden max-w-[9rem] truncate sm:inline">{displayName}</span>
+                <ChevronDown
+                  className={`h-4 w-4 text-slate-400 transition-transform ${userMenuOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              {userMenuOpen ? (
+                <div
+                  role="menu"
+                  className="absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
+                >
+                  <div className="flex items-center gap-3 px-3.5 py-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white">
+                      {initials}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-xs text-slate-500">Signed in as</p>
+                      <p className="truncate text-sm font-semibold text-slate-900">{displayName}</p>
+                      <p className="truncate text-xs text-slate-500">{user.email || user.username}</p>
+                    </div>
+                  </div>
+                  <div className="border-t border-slate-100" />
+                  <Link
+                    href="/dashboard"
+                    role="menuitem"
+                    className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
+                    onClick={() => setUserMenuOpen(false)}
+                  >
+                    <LayoutDashboard className="h-4 w-4 text-slate-400" />
+                    Dashboard
+                  </Link>
+                  <Link
+                    href="/profile"
+                    role="menuitem"
+                    className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
+                    onClick={() => setUserMenuOpen(false)}
+                  >
+                    <User className="h-4 w-4 text-slate-400" />
+                    Profile
+                  </Link>
+                  <div className="my-1 border-t border-slate-100" />
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setUserMenuOpen(false);
+                      logout();
+                    }}
+                    className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-sm text-red-600 hover:bg-red-50"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sign out
+                  </button>
+                </div>
+              ) : null}
             </div>
           </div>
         </header>

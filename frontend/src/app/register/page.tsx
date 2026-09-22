@@ -7,12 +7,12 @@ import {
   EyeOff,
   Lock,
   Mail,
-  Receipt,
   User,
 } from "lucide-react";
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 
+import { AuthPageShell } from "@/components/AuthPageShell";
 import { ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
@@ -65,7 +65,6 @@ export default function RegisterPage() {
     }
   }
 
-  // Reusable floating-label input row
   function FloatField({
     id,
     label,
@@ -90,7 +89,7 @@ export default function RegisterPage() {
     extra?: React.ReactNode;
   }) {
     return (
-      <div className="flex items-center gap-3 rounded-2xl border border-slate-200 px-4 focus-within:border-slate-400 transition">
+      <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 transition focus-within:border-slate-400">
         <Icon className="h-4 w-4 shrink-0 text-slate-400" />
         <div className="relative flex-1">
           <input
@@ -120,24 +119,20 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-12 font-sans selection:bg-blue-600 selection:text-white">
-      {/* Card */}
-      <div className="w-full max-w-sm rounded-3xl bg-white px-8 py-10 shadow-lg">
-
-        {/* Brand Icon */}
+    <AuthPageShell>
+      <div className="rounded-3xl border border-white/80 bg-white/95 px-8 py-10 shadow-xl shadow-slate-900/10 backdrop-blur-sm">
         <div className="flex justify-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <Receipt className="h-6 w-6 text-slate-800" />
+          <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/favicon.ico" alt="SmartBill Nepal" className="h-8 w-8 object-contain" />
           </div>
         </div>
 
-        {/* Heading */}
         <div className="mt-5 text-center">
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Create account</h1>
-          <p className="mt-1 text-sm text-blue-500 font-medium">Start your 3-day free trial</p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Create account</h1>
+          <p className="mt-1 text-sm font-medium text-blue-500">Start your 3-day free trial</p>
         </div>
 
-        {/* Error Banner */}
         {error && (
           <div className="mt-5 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-semibold text-red-700">
             <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
@@ -145,10 +140,7 @@ export default function RegisterPage() {
           </div>
         )}
 
-        {/* Form */}
         <form onSubmit={onSubmit} className="mt-6 space-y-3">
-
-          {/* Store Name */}
           <div>
             <FloatField
               id="store_name"
@@ -162,7 +154,6 @@ export default function RegisterPage() {
             )}
           </div>
 
-          {/* Username */}
           <div>
             <FloatField
               id="username"
@@ -177,7 +168,6 @@ export default function RegisterPage() {
             )}
           </div>
 
-          {/* Email */}
           <div>
             <FloatField
               id="email"
@@ -193,9 +183,8 @@ export default function RegisterPage() {
             )}
           </div>
 
-          {/* Password — has eye toggle so inline */}
           <div>
-            <div className="flex items-center gap-3 rounded-2xl border border-slate-200 px-4 focus-within:border-slate-400 transition">
+            <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 transition focus-within:border-slate-400">
               <Lock className="h-4 w-4 shrink-0 text-slate-400" />
               <div className="relative flex-1">
                 <input
@@ -237,7 +226,6 @@ export default function RegisterPage() {
             )}
           </div>
 
-          {/* Submit */}
           <button
             type="submit"
             disabled={submitting}
@@ -247,25 +235,19 @@ export default function RegisterPage() {
           </button>
         </form>
 
-        {/* Divider */}
         <div className="my-5 flex items-center gap-3">
           <div className="h-px flex-1 bg-slate-200" />
           <span className="text-xs font-medium text-orange-400">or</span>
           <div className="h-px flex-1 bg-slate-200" />
         </div>
 
-        {/* Footer */}
         <p className="text-center text-xs text-slate-500">
           Already have an account?{" "}
           <Link href="/login" className="font-bold text-slate-900 hover:underline">
             Sign in
           </Link>
         </p>
-
-        <p className="mt-6 text-center text-[11px] text-slate-400">
-          &copy; {new Date().getFullYear()} SmartBill Nepal
-        </p>
       </div>
-    </main>
+    </AuthPageShell>
   );
 }

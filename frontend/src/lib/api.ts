@@ -166,9 +166,10 @@ export const authApi = {
       body: payload,
     });
   },
-  deleteAccount() {
+  deleteAccount(payload: { password: string; confirmation: string }) {
     return apiRequest<{ message: string }>("/api/auth/delete-account/", {
       method: "DELETE",
+      body: payload,
     });
   },
 };
