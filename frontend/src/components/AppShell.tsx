@@ -7,6 +7,8 @@ import {
   AlertTriangle,
   BarChart3,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   CreditCard,
   FileText,
   FolderTree,
@@ -15,6 +17,7 @@ import {
   LogOut,
   Menu,
   Package,
+  PanelLeft,
   Settings,
   Sparkles,
   User,
@@ -46,9 +49,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [lowStockCount, setLowStockCount] = useState<number | null>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("sidebar_collapsed");
+    if (saved !== null) {
+      setSidebarCollapsed(saved === "true");
+    }
+  }, []);
+
+  const toggleDesktopSidebar = () => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem("sidebar_collapsed", String(next));
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (!loading && !user) {
@@ -120,7 +139,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <Link
             key={item.href}
             href={item.href}
-            className={`group relative flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all ${
+            title={sidebarCollapsed ? item.label : undefined}
+            className={`group relative flex items-center rounded-xl py-2.5 text-sm font-medium transition-all ${
+              sidebarCollapsed ? "px-3.5 md:px-0 md:justify-center" : "px-3.5 justify-between"
+            } ${
               active
                 ? "bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-900/30"
                 : item.highlight
@@ -128,22 +150,38 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 : "text-slate-300 hover:bg-white/10 hover:text-white"
             }`}
           >
-            <div className="flex items-center gap-3">
+            <div className={`flex items-center gap-3 ${sidebarCollapsed ? "md:gap-0" : ""}`}>
               <Icon
-                className={`h-4 w-4 transition-transform group-hover:scale-110 ${
+                className={`h-5 w-5 shrink-0 transition-transform group-hover:scale-110 ${
                   active ? "text-white" : item.highlight ? "text-amber-400" : "text-slate-400 group-hover:text-white"
                 }`}
               />
-              <span>{item.label}</span>
+              <span className={sidebarCollapsed ? "md:hidden" : ""}>{item.label}</span>
             </div>
             {badgeValue != null && badgeValue > 0 ? (
-              <span
-                className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
-                  active ? "bg-white text-indigo-700" : "bg-red-500 text-white"
-                }`}
-              >
-                {badgeValue}
-              </span>
+              sidebarCollapsed ? (
+                <>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[11px] font-bold md:hidden ${
+                      active ? "bg-white text-indigo-700" : "bg-red-500 text-white"
+                    }`}
+                  >
+                    {badgeValue}
+                  </span>
+                  <span
+                    className="hidden md:block absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-slate-900"
+                    title={`${badgeValue} low stock items`}
+                  />
+                </>
+              ) : (
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                    active ? "bg-white text-indigo-700" : "bg-red-500 text-white"
+                  }`}
+                >
+                  {badgeValue}
+                </span>
+              )
             ) : null}
           </Link>
         );
@@ -152,10 +190,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <button
         type="button"
         onClick={logout}
-        className="group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-300 hover:bg-white/10 hover:text-red-300 transition-all"
+        title={sidebarCollapsed ? "Sign out" : undefined}
+        className={`group flex items-center rounded-xl py-2.5 text-sm font-medium text-slate-300 hover:bg-white/10 hover:text-red-300 transition-all ${
+          sidebarCollapsed ? "px-3.5 md:px-0 md:justify-center" : "px-3.5 gap-3"
+        }`}
       >
-        <LogOut className="h-4 w-4 text-slate-400 transition-transform group-hover:scale-110 group-hover:text-red-400" />
-        <span>Sign out</span>
+        <LogOut className="h-5 w-5 shrink-0 text-slate-400 transition-transform group-hover:scale-110 group-hover:text-red-400" />
+        <span className={sidebarCollapsed ? "md:hidden" : ""}>Sign out</span>
       </button>
     </nav>
   );
@@ -172,16 +213,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       ) : null}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-slate-800/80 bg-slate-900 text-white transition-transform duration-200 ease-in-out md:translate-x-0 ${
-          mobileOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
-        }`}
+        className={`fixed inset-y-0 left-0 z-40 flex flex-col border-r border-slate-800/80 bg-slate-900 text-white transition-all duration-300 ease-in-out ${
+          mobileOpen ? "w-64 translate-x-0 shadow-2xl" : "-translate-x-full md:translate-x-0"
+        } ${sidebarCollapsed ? "md:w-20" : "md:w-64"}`}
       >
-        <div className="flex items-center justify-between border-b border-slate-800 px-6 py-5">
-          <Link href="/dashboard" className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-sky-400 text-white shadow-md shadow-indigo-600/30">
+        <div
+          className={`flex items-center border-b border-slate-800 py-5 transition-all ${
+            sidebarCollapsed ? "md:px-3 md:justify-center" : "px-6 justify-between"
+          }`}
+        >
+          <Link href="/dashboard" className="flex items-center gap-2.5 min-w-0">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-sky-400 text-white shadow-md shadow-indigo-600/30">
               <span className="font-display text-lg font-bold">S</span>
             </div>
-            <div>
+            <div className={sidebarCollapsed ? "md:hidden" : ""}>
               <p className="font-display text-lg font-bold tracking-tight text-white leading-none">
                 SmartBill <span className="text-red-500 font-sans text-xs uppercase tracking-wider">NP</span>
               </p>
@@ -190,6 +235,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </p>
             </div>
           </Link>
+
+          {/* Desktop Collapse Toggle Button in Sidebar */}
+          <button
+            type="button"
+            onClick={toggleDesktopSidebar}
+            className="hidden md:flex rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition"
+            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {sidebarCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
+          </button>
+
+          {/* Mobile Close Button */}
           <button
             type="button"
             className="rounded-lg p-1 text-slate-400 hover:bg-slate-800 hover:text-white md:hidden"
@@ -202,18 +260,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {navLinks}
       </aside>
 
-      <div className="md:pl-64">
+      <div className={`transition-all duration-300 ease-in-out ${sidebarCollapsed ? "md:pl-20" : "md:pl-64"}`}>
         <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
           <div className="flex items-center justify-between gap-3 px-4 py-3.5 md:px-8">
             <div className="flex items-center gap-3">
+              {/* Sidebar Toggle Button */}
               <button
                 type="button"
-                className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-100 md:hidden"
-                onClick={() => setMobileOpen(true)}
-                aria-label="Open menu"
+                className="rounded-xl border border-slate-200 p-2 text-slate-600 hover:bg-slate-100 hover:text-indigo-600 transition shadow-xs"
+                onClick={() => {
+                  if (typeof window !== "undefined" && window.innerWidth < 768) {
+                    setMobileOpen((open) => !open);
+                  } else {
+                    toggleDesktopSidebar();
+                  }
+                }}
+                title="Toggle sidebar"
+                aria-label="Toggle sidebar"
               >
-                <Menu className="h-5 w-5" />
+                <PanelLeft className="h-5 w-5" />
               </button>
+
               <div className="md:hidden flex items-center gap-2">
                 <span className="font-display font-bold text-slate-900">SmartBill</span>
               </div>
