@@ -51,6 +51,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   const [lowStockCount, setLowStockCount] = useState<number | null>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
@@ -109,6 +110,23 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       document.removeEventListener("keydown", handleEscape);
     };
   }, [userMenuOpen]);
+
+  useEffect(() => {
+    if (!logoutConfirmOpen) return;
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setLogoutConfirmOpen(false);
+    };
+
+    document.addEventListener("keydown", handleEscape);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [logoutConfirmOpen]);
 
   if (loading || !user) {
     return (
@@ -189,14 +207,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <button
         type="button"
-        onClick={logout}
-        title={sidebarCollapsed ? "Sign out" : undefined}
+        onClick={() => setLogoutConfirmOpen(true)}
+        title={sidebarCollapsed ? "Logout" : undefined}
         className={`group flex items-center rounded-xl py-2.5 text-sm font-medium text-slate-300 hover:bg-white/10 hover:text-red-300 transition-all ${
           sidebarCollapsed ? "px-3.5 md:px-0 md:justify-center" : "px-3.5 gap-3"
         }`}
       >
         <LogOut className="h-5 w-5 shrink-0 text-slate-400 transition-transform group-hover:scale-110 group-hover:text-red-400" />
-        <span className={sidebarCollapsed ? "md:hidden" : ""}>Sign out</span>
+        <span className={sidebarCollapsed ? "md:hidden" : ""}>Logout</span>
       </button>
     </nav>
   );
@@ -346,12 +364,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     role="menuitem"
                     onClick={() => {
                       setUserMenuOpen(false);
-                      logout();
+                      setLogoutConfirmOpen(true);
                     }}
                     className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-sm text-red-600 hover:bg-red-50"
                   >
                     <LogOut className="h-4 w-4" />
-                    Sign out
+                    Logout
                   </button>
                 </div>
               ) : null}
@@ -363,6 +381,60 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         <main className="px-4 py-6 md:px-8 md:py-8 max-w-7xl mx-auto">{children}</main>
       </div>
+
+      {logoutConfirmOpen ? (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <button
+            type="button"
+            aria-label="Close logout confirmation"
+            className="absolute inset-0 bg-slate-900/50 backdrop-blur-md"
+            onClick={() => setLogoutConfirmOpen(false)}
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="logout-dialog-title"
+            className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl"
+          >
+            <div className="flex items-start gap-4 px-6 pt-6 pb-5">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-50">
+                <AlertTriangle className="h-6 w-6 text-red-500" />
+              </div>
+              <div className="min-w-0 pt-0.5">
+                <h2
+                  id="logout-dialog-title"
+                  className="font-display text-xl font-bold tracking-tight text-slate-900"
+                >
+                  Logout
+                </h2>
+                <p className="mt-1.5 text-sm leading-relaxed text-slate-500">
+                  Are you sure you want to logout from SmartBill Nepal?
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 border-t border-slate-100 px-6 py-4">
+              <button
+                type="button"
+                onClick={() => setLogoutConfirmOpen(false)}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setLogoutConfirmOpen(false);
+                  logout();
+                }}
+                className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
