@@ -264,10 +264,9 @@ This allows multiple businesses to use the same deployment without sharing recor
 
 ---
 
-## Developer
+## Developed By
 
 Samir Khatiwada  
-Dlytica Academy — 30 Days of Learning Challenge
 
 ---
 
