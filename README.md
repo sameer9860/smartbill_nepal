@@ -16,8 +16,6 @@ AI-powered billing, inventory, and business management system for Nepali small a
 - Frontend app: [https://smartbill-nepal.vercel.app/](https://smartbill-nepal.vercel.app/)
 - Backend API: [https://smartbillnepal-production.up.railway.app/api](https://smartbillnepal-production.up.railway.app/api)
 - GitHub: [https://github.com/sameer9860/smartbill_nepal](https://github.com/sameer9860/smartbill_nepal)
-- Demo login: `demo` / `Demo@1234`
-
 ---
 
 ## Overview
@@ -266,7 +264,7 @@ This allows multiple businesses to use the same deployment without sharing recor
 
 ## Developed By
 
-Samir Khatiwada  
+Samir Khatiwada :[samirkhatiwada.com.np](samirkhatiwada.com.np)
 
 ---
 
