@@ -264,7 +264,7 @@ This allows multiple businesses to use the same deployment without sharing recor
 
 ## Developed By
 
-Samir Khatiwada :[https://samirkhatiwada.com.np/](samirkhatiwada.com.np)
+Samir Khatiwada: [https://samirkhatiwada.com.np/](https://samirkhatiwada.com.np/)
 
 ---
 
