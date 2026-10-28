@@ -16,6 +16,59 @@ import { AuthPageShell } from "@/components/AuthPageShell";
 import { ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
+function FloatField({
+  id,
+  label,
+  type = "text",
+  icon: Icon,
+  value,
+  onChange,
+  autoComplete,
+  required: req = true,
+  minLength,
+  extra,
+}: {
+  id: string;
+  label: string;
+  type?: string;
+  icon: React.ElementType;
+  value: string;
+  onChange: (v: string) => void;
+  autoComplete?: string;
+  required?: boolean;
+  minLength?: number;
+  extra?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 transition focus-within:border-slate-400">
+      <Icon className="h-4 w-4 shrink-0 text-slate-400" />
+      <div className="relative flex-1">
+        <input
+          id={id}
+          type={type}
+          className="peer w-full bg-transparent pb-1.5 pt-5 text-sm text-slate-900 placeholder-transparent outline-none"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={label}
+          autoComplete={autoComplete}
+          required={req}
+          minLength={minLength}
+        />
+        <label
+          htmlFor={id}
+          className="pointer-events-none absolute left-0 top-3.5 text-sm text-slate-400 transition-all duration-200
+            peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-placeholder-shown:text-slate-400
+            peer-focus:top-1 peer-focus:text-[11px] peer-focus:font-semibold peer-focus:text-blue-600
+            peer-[&:not(:placeholder-shown)]:top-1 peer-[&:not(:placeholder-shown)]:text-[11px] peer-[&:not(:placeholder-shown)]:font-semibold peer-[&:not(:placeholder-shown)]:text-slate-500"
+        >
+          {label}
+        </label>
+      </div>
+      {extra}
+    </div>
+  );
+}
+
 export default function RegisterPage() {
   const { register } = useAuth();
   const [form, setForm] = useState({
@@ -63,59 +116,6 @@ export default function RegisterPage() {
     } finally {
       setSubmitting(false);
     }
-  }
-
-  function FloatField({
-    id,
-    label,
-    type = "text",
-    icon: Icon,
-    value,
-    onChange,
-    autoComplete,
-    required: req = true,
-    minLength,
-    extra,
-  }: {
-    id: string;
-    label: string;
-    type?: string;
-    icon: React.ElementType;
-    value: string;
-    onChange: (v: string) => void;
-    autoComplete?: string;
-    required?: boolean;
-    minLength?: number;
-    extra?: React.ReactNode;
-  }) {
-    return (
-      <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 transition focus-within:border-slate-400">
-        <Icon className="h-4 w-4 shrink-0 text-slate-400" />
-        <div className="relative flex-1">
-          <input
-            id={id}
-            type={type}
-            className="peer w-full bg-transparent pb-1.5 pt-5 text-sm text-slate-900 placeholder-transparent outline-none"
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder={label}
-            autoComplete={autoComplete}
-            required={req}
-            minLength={minLength}
-          />
-          <label
-            htmlFor={id}
-            className="pointer-events-none absolute left-0 top-3.5 text-sm text-slate-400 transition-all duration-200
-              peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-placeholder-shown:text-slate-400
-              peer-focus:top-1 peer-focus:text-[11px] peer-focus:font-semibold peer-focus:text-blue-600
-              peer-[&:not(:placeholder-shown)]:top-1 peer-[&:not(:placeholder-shown)]:text-[11px] peer-[&:not(:placeholder-shown)]:font-semibold peer-[&:not(:placeholder-shown)]:text-slate-500"
-          >
-            {label}
-          </label>
-        </div>
-        {extra}
-      </div>
-    );
   }
 
   return (
@@ -184,43 +184,30 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 transition focus-within:border-slate-400">
-              <Lock className="h-4 w-4 shrink-0 text-slate-400" />
-              <div className="relative flex-1">
-                <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  className="peer w-full bg-transparent pb-1.5 pt-5 text-sm text-slate-900 placeholder-transparent outline-none"
-                  value={form.password}
-                  onChange={(e) => update("password", e.target.value)}
-                  placeholder="Password"
-                  autoComplete="new-password"
-                  minLength={8}
-                  required
-                />
-                <label
-                  htmlFor="password"
-                  className="pointer-events-none absolute left-0 top-3.5 text-sm text-slate-400 transition-all duration-200
-                    peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-placeholder-shown:text-slate-400
-                    peer-focus:top-1 peer-focus:text-[11px] peer-focus:font-semibold peer-focus:text-blue-600
-                    peer-[&:not(:placeholder-shown)]:top-1 peer-[&:not(:placeholder-shown)]:text-[11px] peer-[&:not(:placeholder-shown)]:font-semibold peer-[&:not(:placeholder-shown)]:text-slate-500"
+            <FloatField
+              id="password"
+              label="Password (min. 8 chars)"
+              type={showPassword ? "text" : "password"}
+              icon={Lock}
+              value={form.password}
+              onChange={(v) => update("password", v)}
+              autoComplete="new-password"
+              minLength={8}
+              extra={
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="shrink-0 text-slate-400 transition hover:text-slate-600"
+                  title={showPassword ? "Hide password" : "Show password"}
                 >
-                  Password (min. 8 chars)
-                </label>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="shrink-0 text-slate-400 transition hover:text-slate-600"
-                title={showPassword ? "Hide password" : "Show password"}
-              >
-                {showPassword ? (
-                  <Eye className="h-4 w-4 text-blue-600" />
-                ) : (
-                  <EyeOff className="h-4 w-4" />
-                )}
-              </button>
-            </div>
+                  {showPassword ? (
+                    <Eye className="h-4 w-4 text-blue-600" />
+                  ) : (
+                    <EyeOff className="h-4 w-4" />
+                  )}
+                </button>
+              }
+            />
             {fieldErrors.password && (
               <p className="mt-1 pl-1 text-xs font-medium text-red-600">{fieldErrors.password}</p>
             )}
