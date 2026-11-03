@@ -18,7 +18,16 @@ from .ai import (
     smart_reorder_plan,
     weekly_order_list,
 )
-from .models import Category, Customer, Invoice, InvoiceItem, Product, StockMovement, Tenant
+from .models import (
+    Category,
+    Customer,
+    Invoice,
+    InvoiceItem,
+    Product,
+    StockMovement,
+    SubscriptionReceipt,
+    Tenant,
+)
 from .permissions import HasActiveTrialOrSubscription, resolve_tenant
 from .serializers import (
     CategorySerializer,
@@ -26,7 +35,7 @@ from .serializers import (
     InvoiceSerializer,
     ProductSerializer,
     StockMovementSerializer,
-    SubscribeSerializer,
+    SubscriptionReceiptSerializer,
 )
 
 
@@ -186,12 +195,22 @@ class SubscriptionPlansAPIView(APIView):
 
 
 class SubscribeAPIView(APIView):
-    """Simulate Nepal local payment and activate the selected plan."""
-
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        serializer = SubscribeSerializer(data=request.data)
+        return Response(
+            {
+                'detail': 'Instant payment activation is disabled. Submit a payment receipt for manual verification.'
+            },
+            status=status.HTTP_410_GONE,
+        )
+
+
+class SubmitSubscriptionReceiptAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = SubscriptionReceiptSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         tenant = resolve_tenant(request)
@@ -202,43 +221,28 @@ class SubscribeAPIView(APIView):
             )
 
         plan = serializer.validated_data['plan']
-        payment_method = serializer.validated_data['payment_method']
-        now = timezone.now()
-
-        if plan == Tenant.PLAN_BASIC_MONTHLY:
-            ends_at = now + timedelta(days=30)
-            price = 999
-        elif plan == Tenant.PLAN_PRO_YEARLY:
-            ends_at = now + timedelta(days=365)
-            price = 9999
-        else:
-            ends_at = now + timedelta(days=365)
-            price = None
-
-        tenant.subscription_plan = plan
-        tenant.subscription_status = Tenant.STATUS_ACTIVE
-        tenant.subscription_ends_at = ends_at
-        tenant.save(
-            update_fields=[
-                'subscription_plan',
-                'subscription_status',
-                'subscription_ends_at',
-            ]
+        amount = next(
+            item['price_nrs']
+            for item in SUBSCRIPTION_PLANS
+            if item['id'] == plan
         )
-
-        from accounts.serializers import TenantSubscriptionSerializer
-
+        receipt = SubscriptionReceipt.objects.create(
+            tenant=tenant,
+            submitted_by=request.user,
+            plan=plan,
+            amount_nrs=amount,
+            receipt=serializer.validated_data['receipt'],
+        )
         return Response(
             {
-                'message': 'Subscription activated successfully.',
-                'payment': {
-                    'method': payment_method,
-                    'amount_nrs': price,
-                    'status': 'SUCCESS',
-                    'simulated': True,
-                },
-                'tenant': TenantSubscriptionSerializer(tenant).data,
-            }
+                'message': 'Receipt submitted for verification. Your subscription will activate after approval.',
+                'id': receipt.id,
+                'plan': receipt.plan,
+                'amount_nrs': receipt.amount_nrs,
+                'status': receipt.status,
+                'submitted_at': receipt.submitted_at,
+            },
+            status=status.HTTP_201_CREATED,
         )
 
 
