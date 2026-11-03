@@ -7,3 +7,4 @@ frontend/.next/
 frontend/out/
 *.pyc
 .DS_Store
+media
