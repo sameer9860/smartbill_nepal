@@ -1,3 +1,4 @@
+from django.core.validators import FileExtensionValidator
 from rest_framework import serializers
 
 from .models import Category, Customer, Invoice, InvoiceItem, Product, StockMovement
@@ -149,19 +150,22 @@ class StockMovementSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'product_name', 'created_at']
 
 
-class SubscribeSerializer(serializers.Serializer):
+def validate_receipt_size(receipt):
+    if receipt.size > 8 * 1024 * 1024:
+        raise serializers.ValidationError('Receipt files must be 8 MB or smaller.')
+    return receipt
+
+
+class SubscriptionReceiptSerializer(serializers.Serializer):
     PLAN_CHOICES = [
         ('BASIC_MONTHLY', 'Basic Monthly'),
         ('PRO_YEARLY', 'Pro Yearly'),
-        ('ENTERPRISE', 'Enterprise'),
-    ]
-    PAYMENT_METHODS = [
-        ('ESEWA', 'eSewa'),
-        ('KHALTI', 'Khalti'),
-        ('FONEPAY', 'Fonepay'),
-        ('BANK_TRANSFER', 'Bank Transfer'),
-        ('SIMULATED', 'Simulated'),
     ]
 
     plan = serializers.ChoiceField(choices=PLAN_CHOICES)
-    payment_method = serializers.ChoiceField(choices=PAYMENT_METHODS, default='SIMULATED')
+    receipt = serializers.FileField(
+        validators=[
+            FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'pdf']),
+            validate_receipt_size,
+        ],
+    )
