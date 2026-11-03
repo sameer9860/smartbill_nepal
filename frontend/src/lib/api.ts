@@ -81,9 +81,10 @@ export async function apiRequest<T>(
   options: RequestOptions = {}
 ): Promise<T> {
   const { method = "GET", body, auth = true, retry = true } = options;
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+  const headers: Record<string, string> = {};
+
+  if (!isFormData) headers["Content-Type"] = "application/json";
 
   if (auth) {
     const token = getAccessToken();
@@ -93,7 +94,11 @@ export async function apiRequest<T>(
   const res = await fetch(`${API_URL}${path}`, {
     method,
     headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body: isFormData
+      ? (body as FormData)
+      : body !== undefined
+        ? JSON.stringify(body)
+        : undefined,
   });
 
   if (res.status === 401 && auth && retry) {
@@ -332,19 +337,21 @@ export const coreApi = {
       "/api/subscription/plans/"
     );
   },
-  subscribe(payload: { plan: string; payment_method: string }) {
+  submitSubscriptionReceipt(payload: { plan: string; receipt: File }) {
+    const formData = new FormData();
+    formData.append("plan", payload.plan);
+    formData.append("receipt", payload.receipt);
+
     return apiRequest<{
+      id: number;
+      plan: string;
+      amount_nrs: number | string;
+      status: "PENDING" | "APPROVED" | "REJECTED";
+      submitted_at: string;
       message: string;
-      payment: {
-        method: string;
-        amount_nrs: number | null;
-        status: string;
-        simulated: boolean;
-      };
-      tenant: User["tenant"];
-    }>("/api/subscription/subscribe/", {
+    }>("/api/subscription/receipt/", {
       method: "POST",
-      body: payload,
+      body: formData,
     });
   },
 };
