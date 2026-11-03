@@ -96,6 +96,53 @@ class UserProfile(models.Model):
         return f"{self.user.username}'s Profile"
 
 
+class SubscriptionReceipt(models.Model):
+    STATUS_PENDING = 'PENDING'
+    STATUS_APPROVED = 'APPROVED'
+    STATUS_REJECTED = 'REJECTED'
+    STATUS_CHOICES = [
+        (STATUS_PENDING, 'Pending'),
+        (STATUS_APPROVED, 'Approved'),
+        (STATUS_REJECTED, 'Rejected'),
+    ]
+    PLAN_CHOICES = [
+        (Tenant.PLAN_BASIC_MONTHLY, 'Basic Monthly'),
+        (Tenant.PLAN_PRO_YEARLY, 'Pro Yearly'),
+    ]
+
+    tenant = models.ForeignKey(
+        Tenant,
+        on_delete=models.CASCADE,
+        related_name='subscription_receipts',
+    )
+    submitted_by = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='subscription_receipts',
+    )
+    plan = models.CharField(max_length=32, choices=PLAN_CHOICES)
+    amount_nrs = models.DecimalField(max_digits=10, decimal_places=2)
+    receipt = models.FileField(upload_to='subscription_receipts/%Y/%m/')
+    status = models.CharField(
+        max_length=16,
+        choices=STATUS_CHOICES,
+        default=STATUS_PENDING,
+    )
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    reviewed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reviewed_subscription_receipts',
+    )
+    review_note = models.TextField(blank=True)
+
+    def __str__(self):
+        return f'{self.tenant} - {self.get_plan_display()} ({self.status})'
+
+
 # Tenant Manager
 class TenantManager(models.Manager):
     def get_queryset(self):
