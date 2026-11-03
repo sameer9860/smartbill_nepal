@@ -12,6 +12,7 @@ from .api_views import (
     ReportsAPIView,
     StockMovementViewSet,
     SubscribeAPIView,
+    SubmitSubscriptionReceiptAPIView,
     SubscriptionPlansAPIView,
 )
 
@@ -29,5 +30,6 @@ urlpatterns = [
     path('low-stock/', LowStockAPIView.as_view(), name='api_low_stock'),
     path('subscription/plans/', SubscriptionPlansAPIView.as_view(), name='api_subscription_plans'),
     path('subscription/subscribe/', SubscribeAPIView.as_view(), name='api_subscribe'),
+    path('subscription/receipt/', SubmitSubscriptionReceiptAPIView.as_view(), name='api_subscription_receipt'),
     path('', include(router.urls)),
 ]
