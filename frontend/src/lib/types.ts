@@ -19,6 +19,7 @@ export type User = {
   email: string;
   first_name: string;
   last_name: string;
+  is_staff: boolean;
   tenant: Tenant | null;
 };
 
@@ -236,6 +237,76 @@ export type CategorySummaryItem = {
   category: string;
   total_qty: number;
   total_revenue: number;
+};
+
+// ----- Admin types -----
+
+export type AdminTenant = {
+  id: number;
+  name: string;
+  subscription_plan: string;
+  subscription_status: string;
+  subscription_ends_at: string | null;
+  trial_starts_at: string;
+  trial_ends_at: string;
+  created_at: string;
+  has_access: boolean;
+  is_trial_active: boolean;
+  days_left_in_trial: number;
+  owner_username: string | null;
+  owner_email: string | null;
+  owner_id: number | null;
+  receipts?: AdminReceipt[];
+};
+
+export type AdminReceipt = {
+  id: number;
+  tenant_id: number;
+  tenant_name: string;
+  submitted_by_id: number;
+  submitted_by_username: string;
+  submitted_by_email: string;
+  plan: string;
+  plan_display: string;
+  amount_nrs: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status_display: string;
+  submitted_at: string;
+  reviewed_at: string | null;
+  reviewed_by_username: string | null;
+  review_note: string;
+  receipt_url: string | null;
+};
+
+export type AdminUser = {
+  id: number;
+  username: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  is_staff: boolean;
+  is_active: boolean;
+  date_joined: string;
+  last_login: string | null;
+  tenant_id: number | null;
+  tenant_name: string | null;
+  subscription_plan: string | null;
+  subscription_status: string | null;
+};
+
+export type AdminDashboard = {
+  total_tenants: number;
+  active_tenants: number;
+  trial_tenants: number;
+  expired_tenants: number;
+  pending_receipts: number;
+  total_users: number;
+  total_revenue_nrs: number;
+  monthly_revenue: Array<{ month: string; revenue: number }>;
+  plan_distribution: Array<{ subscription_plan: string; count: number }>;
+  recent_tenants: AdminTenant[];
+  recent_pending_receipts: AdminReceipt[];
+  expiring_soon_count: number;
 };
 
 export type AIInsightsData = {
