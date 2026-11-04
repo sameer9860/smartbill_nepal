@@ -1,5 +1,9 @@
 import type {
   AIInsightsData,
+  AdminDashboard,
+  AdminReceipt,
+  AdminTenant,
+  AdminUser,
   AuthResponse,
   Category,
   Customer,
@@ -361,3 +365,82 @@ export function formatNpr(value: string | number | null | undefined) {
   if (Number.isNaN(n)) return "NPR 0";
   return `NPR ${n.toLocaleString("en-NP", { maximumFractionDigits: 2 })}`;
 }
+
+// ---------------------------------------------------------------------------
+// Admin API (is_staff only)
+// ---------------------------------------------------------------------------
+
+export const adminApi = {
+  dashboard() {
+    return apiRequest<AdminDashboard>("/api/admin/dashboard/");
+  },
+
+  // Tenants
+  tenants(params?: { status?: string; plan?: string; search?: string }) {
+    const qs = new URLSearchParams();
+    if (params?.status) qs.set("status", params.status);
+    if (params?.plan) qs.set("plan", params.plan);
+    if (params?.search) qs.set("search", params.search);
+    const query = qs.toString() ? `?${qs.toString()}` : "";
+    return apiRequest<{ tenants: AdminTenant[]; total: number }>(
+      `/api/admin/tenants/${query}`
+    );
+  },
+  tenant(id: number) {
+    return apiRequest<AdminTenant>(`/api/admin/tenants/${id}/`);
+  },
+  updateTenant(
+    id: number,
+    payload: {
+      subscription_plan?: string;
+      subscription_status?: string;
+      subscription_ends_at?: string | null;
+      name?: string;
+    }
+  ) {
+    return apiRequest<AdminTenant>(`/api/admin/tenants/${id}/`, {
+      method: "PATCH",
+      body: payload,
+    });
+  },
+
+  // Receipts
+  receipts(params?: { status?: string; plan?: string; search?: string }) {
+    const qs = new URLSearchParams();
+    if (params?.status) qs.set("status", params.status);
+    if (params?.plan) qs.set("plan", params.plan);
+    if (params?.search) qs.set("search", params.search);
+    const query = qs.toString() ? `?${qs.toString()}` : "";
+    return apiRequest<{ receipts: AdminReceipt[]; total: number }>(
+      `/api/admin/receipts/${query}`
+    );
+  },
+  reviewReceipt(
+    id: number,
+    payload: { action: "approve" | "reject"; note?: string }
+  ) {
+    return apiRequest<AdminReceipt>(`/api/admin/receipts/${id}/`, {
+      method: "POST",
+      body: payload,
+    });
+  },
+
+  // Users
+  users(params?: { search?: string }) {
+    const qs = new URLSearchParams();
+    if (params?.search) qs.set("search", params.search);
+    const query = qs.toString() ? `?${qs.toString()}` : "";
+    return apiRequest<{ users: AdminUser[]; total: number }>(
+      `/api/admin/users/${query}`
+    );
+  },
+  updateUser(
+    id: number,
+    payload: { is_active?: boolean; is_staff?: boolean }
+  ) {
+    return apiRequest<{ id: number; is_active: boolean; is_staff: boolean }>(
+      `/api/admin/users/${id}/`,
+      { method: "PATCH", body: payload }
+    );
+  },
+};
