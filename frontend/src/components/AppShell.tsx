@@ -19,6 +19,7 @@ import {
   Package,
   PanelLeft,
   Settings,
+  Shield,
   Sparkles,
   User,
   Users,
@@ -216,6 +217,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <LogOut className="h-5 w-5 shrink-0 text-slate-400 transition-transform group-hover:scale-110 group-hover:text-red-400" />
         <span className={sidebarCollapsed ? "md:hidden" : ""}>Logout</span>
       </button>
+
+      {/* Admin panel link — only for staff users */}
+      {user.is_staff ? (
+        <div className={`mx-3 mb-3 ${sidebarCollapsed ? "md:mx-1" : ""}`}>
+          <Link
+            href="/admin/dashboard"
+            title={sidebarCollapsed ? "Admin Panel" : undefined}
+            className={`flex items-center gap-3 rounded-xl border border-violet-700/50 bg-violet-900/40 px-3.5 py-2.5 text-sm font-semibold text-violet-200 transition hover:bg-violet-800/60 ${
+              sidebarCollapsed ? "md:justify-center md:px-0" : ""
+            }`}
+          >
+            <Shield className="h-5 w-5 shrink-0 text-violet-400" />
+            <span className={sidebarCollapsed ? "md:hidden" : ""}>Admin Panel</span>
+          </Link>
+        </div>
+      ) : null}
     </nav>
   );
 
