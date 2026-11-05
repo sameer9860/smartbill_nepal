@@ -181,6 +181,26 @@ export const authApi = {
       body: payload,
     });
   },
+  forgotPassword(email: string) {
+    return apiRequest<{ message: string }>("/api/auth/forgot-password/", {
+      method: "POST",
+      body: { email },
+      auth: false,
+    });
+  },
+  verifyResetToken(uid: string, token: string) {
+    return apiRequest<{ valid: boolean; username?: string }>(
+      `/api/auth/reset-password/?uid=${encodeURIComponent(uid)}&token=${encodeURIComponent(token)}`,
+      { auth: false }
+    );
+  },
+  resetPassword(payload: { uid: string; token: string; new_password: string }) {
+    return apiRequest<{ message: string }>("/api/auth/reset-password/", {
+      method: "POST",
+      body: payload,
+      auth: false,
+    });
+  },
 };
 
 export const coreApi = {
