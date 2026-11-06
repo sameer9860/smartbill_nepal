@@ -120,6 +120,7 @@ export default function AdminUsersPage() {
             <table className="min-w-full divide-y divide-slate-100 text-sm">
               <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
+                  <th className="px-5 py-3 text-left font-semibold">S.N.</th>
                   <th className="px-5 py-3 text-left font-semibold">User</th>
                   <th className="px-5 py-3 text-left font-semibold">Store</th>
                   <th className="px-5 py-3 text-left font-semibold">Plan</th>
@@ -131,10 +132,13 @@ export default function AdminUsersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {users.map((u) => {
+                {users.map((u, index) => {
                   const isMe = u.id === me?.id;
                   return (
                     <tr key={u.id} className="hover:bg-slate-50 transition">
+                      <td className="whitespace-nowrap px-5 py-3.5 text-slate-400">
+                        {index + 1}
+                      </td>
                       {/* User */}
                       <td className="whitespace-nowrap px-5 py-3.5">
                         <div className="flex items-center gap-3">
