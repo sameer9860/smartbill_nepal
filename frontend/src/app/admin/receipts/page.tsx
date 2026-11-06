@@ -133,6 +133,7 @@ export default function AdminReceiptsPage() {
             <table className="min-w-full divide-y divide-slate-100 text-sm">
               <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
+                  <th className="px-5 py-3 text-left font-semibold">S.N.</th>
                   <th className="px-5 py-3 text-left font-semibold">Store</th>
                   <th className="px-5 py-3 text-left font-semibold">Submitted By</th>
                   <th className="px-5 py-3 text-left font-semibold">Plan</th>
@@ -144,8 +145,11 @@ export default function AdminReceiptsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {receipts.map((r) => (
+                {receipts.map((r, index) => (
                   <tr key={r.id} className="hover:bg-slate-50 transition">
+                    <td className="whitespace-nowrap px-5 py-3.5 text-slate-400">
+                      {index + 1}
+                    </td>
                     <td className="whitespace-nowrap px-5 py-3.5 font-semibold text-slate-900">
                       {r.tenant_name}
                     </td>
