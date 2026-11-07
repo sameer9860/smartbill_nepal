@@ -10,6 +10,7 @@ from .api_views import (
     ProfileUpdateAPIView,
     RegisterAPIView,
     ResetPasswordAPIView,
+    VerifyOTPAPIView,
 )
 
 urlpatterns = [
@@ -20,6 +21,7 @@ urlpatterns = [
     path('change-password/', ChangePasswordAPIView.as_view(), name='api_change_password'),
     path('delete-account/', DeleteAccountAPIView.as_view(), name='api_delete_account'),
     path('forgot-password/', ForgotPasswordAPIView.as_view(), name='api_forgot_password'),
+    path('verify-otp/', VerifyOTPAPIView.as_view(), name='api_verify_otp'),
     path('reset-password/', ResetPasswordAPIView.as_view(), name='api_reset_password'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
