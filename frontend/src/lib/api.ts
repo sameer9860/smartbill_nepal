@@ -188,13 +188,17 @@ export const authApi = {
       auth: false,
     });
   },
-  verifyResetToken(uid: string, token: string) {
-    return apiRequest<{ valid: boolean; username?: string }>(
-      `/api/auth/reset-password/?uid=${encodeURIComponent(uid)}&token=${encodeURIComponent(token)}`,
-      { auth: false }
+  verifyOtp(payload: { email: string; otp: string }) {
+    return apiRequest<{ valid: boolean; message: string; username?: string }>(
+      "/api/auth/verify-otp/",
+      {
+        method: "POST",
+        body: payload,
+        auth: false,
+      }
     );
   },
-  resetPassword(payload: { uid: string; token: string; new_password: string }) {
+  resetPassword(payload: { email: string; otp: string; new_password: string }) {
     return apiRequest<{ message: string }>("/api/auth/reset-password/", {
       method: "POST",
       body: payload,
