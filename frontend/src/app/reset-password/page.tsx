@@ -6,8 +6,10 @@ import {
   CheckCircle2,
   Eye,
   EyeOff,
+  KeyRound,
   Lock,
-  ShieldAlert,
+  Mail,
+  RotateCw,
 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -18,57 +20,63 @@ import { ApiError, authApi } from "@/lib/api";
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
-  const uid = searchParams.get("uid") || "";
-  const token = searchParams.get("token") || "";
+  const initialEmail = searchParams.get("email") || "";
+  const initialOtp = searchParams.get("otp") || "";
 
-  const [verifying, setVerifying] = useState(true);
-  const [tokenValid, setTokenValid] = useState(false);
-  const [username, setUsername] = useState("");
-  const [tokenError, setTokenError] = useState("");
-
+  const [email, setEmail] = useState(initialEmail);
+  const [otp, setOtp] = useState(initialOtp);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const [submitting, setSubmitting] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendMsg, setResendMsg] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    if (!uid || !token) {
-      setTokenValid(false);
-      setTokenError("Missing or incomplete password reset link.");
-      setVerifying(false);
+    if (initialEmail && !email) setEmail(initialEmail);
+    if (initialOtp && !otp) setOtp(initialOtp);
+  }, [initialEmail, initialOtp, email, otp]);
+
+  async function handleResendCode() {
+    if (!email.trim()) {
+      setError("Please enter your email to resend the code.");
       return;
     }
-
-    authApi
-      .verifyResetToken(uid, token)
-      .then((res) => {
-        if (res.valid) {
-          setTokenValid(true);
-          setUsername(res.username || "");
-        } else {
-          setTokenValid(false);
-          setTokenError("This password reset link is invalid or has expired.");
-        }
-      })
-      .catch((err) => {
-        setTokenValid(false);
-        setTokenError(
-          err instanceof ApiError
-            ? err.message
-            : "This password reset link has expired or has already been used."
-        );
-      })
-      .finally(() => {
-        setVerifying(false);
-      });
-  }, [uid, token]);
+    setResending(true);
+    setResendMsg("");
+    setError("");
+    try {
+      await authApi.forgotPassword(email.trim());
+      setResendMsg("A new 6-digit code has been sent to your email.");
+    } catch (err) {
+      setError(
+        err instanceof ApiError ? err.message : "Failed to resend code."
+      );
+    } finally {
+      setResending(false);
+    }
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
+    setResendMsg("");
+
+    const cleanOtp = otp.trim().replace(/\s+/g, "");
+
+    if (!email.trim()) {
+      setError("Email address is required.");
+      return;
+    }
+
+    if (cleanOtp.length !== 6) {
+      setError("Please enter the complete 6-digit verification code.");
+      return;
+    }
 
     if (password.length < 8) {
       setError("Password must be at least 8 characters long.");
@@ -83,8 +91,8 @@ function ResetPasswordForm() {
     setSubmitting(true);
     try {
       await authApi.resetPassword({
-        uid,
-        token,
+        email: email.trim(),
+        otp: cleanOtp,
         new_password: password,
       });
       setSuccess(true);
@@ -92,7 +100,7 @@ function ResetPasswordForm() {
       setError(
         err instanceof ApiError
           ? err.message
-          : "Failed to reset password. Please try again."
+          : "Invalid or expired 6-digit code. Please try again."
       );
     } finally {
       setSubmitting(false);
@@ -108,42 +116,7 @@ function ResetPasswordForm() {
         </div>
       </div>
 
-      {verifying ? (
-        <div className="mt-8 flex flex-col items-center justify-center py-6 text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
-          <p className="mt-4 text-xs font-medium text-slate-500">
-            Verifying your reset link…
-          </p>
-        </div>
-      ) : !tokenValid ? (
-        <div className="mt-5 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
-            <ShieldAlert className="h-6 w-6" />
-          </div>
-          <h1 className="mt-4 text-xl font-bold tracking-tight text-slate-900">
-            Link Expired or Invalid
-          </h1>
-          <p className="mt-2 text-xs leading-relaxed text-slate-500">
-            {tokenError || "This password reset link is invalid or has already expired."}
-          </p>
-
-          <div className="mt-6 space-y-3">
-            <Link
-              href="/forgot-password"
-              className="inline-block w-full rounded-2xl bg-slate-900 py-3 text-xs font-bold text-white transition hover:bg-slate-700"
-            >
-              Request a new reset link
-            </Link>
-            <Link
-              href="/login"
-              className="inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:underline"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              Back to sign in
-            </Link>
-          </div>
-        </div>
-      ) : success ? (
+      {success ? (
         <div className="mt-5 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
             <CheckCircle2 className="h-6 w-6" />
@@ -168,21 +141,85 @@ function ResetPasswordForm() {
         <>
           <div className="mt-5 text-center">
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              Set new password
+              Reset password
             </h1>
             <p className="mt-1 text-sm font-medium text-blue-500">
-              {username ? `For account: ${username}` : "Enter your new password below"}
+              Enter the 6-digit code sent to your email
             </p>
           </div>
 
+          {resendMsg && (
+            <div className="mt-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-xs font-semibold text-emerald-700">
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+              <span>{resendMsg}</span>
+            </div>
+          )}
+
           {error && (
-            <div className="mt-5 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-semibold text-red-700">
+            <div className="mt-4 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-semibold text-red-700">
               <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
               <span>{error}</span>
             </div>
           )}
 
-          <form onSubmit={onSubmit} className="mt-6 space-y-3">
+          <form onSubmit={onSubmit} className="mt-5 space-y-3">
+            {/* Email field */}
+            <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 transition focus-within:border-slate-400">
+              <Mail className="h-4 w-4 shrink-0 text-slate-400" />
+              <div className="relative flex-1">
+                <input
+                  id="reset-email"
+                  type="email"
+                  className="peer w-full bg-transparent pb-1.5 pt-5 text-sm text-slate-900 placeholder-transparent outline-none"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Email address"
+                  autoComplete="email"
+                  required
+                />
+                <label
+                  htmlFor="reset-email"
+                  className="pointer-events-none absolute left-0 top-3.5 text-sm text-slate-400 transition-all duration-200
+                    peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-placeholder-shown:text-slate-400
+                    peer-focus:top-1 peer-focus:text-[11px] peer-focus:font-semibold peer-focus:text-blue-600
+                    peer-[&:not(:placeholder-shown)]:top-1 peer-[&:not(:placeholder-shown)]:text-[11px] peer-[&:not(:placeholder-shown)]:font-semibold peer-[&:not(:placeholder-shown)]:text-slate-500"
+                >
+                  Email address
+                </label>
+              </div>
+            </div>
+
+            {/* 6-digit OTP code */}
+            <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 transition focus-within:border-slate-400">
+              <KeyRound className="h-4 w-4 shrink-0 text-slate-400" />
+              <div className="relative flex-1">
+                <input
+                  id="reset-otp"
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  className="peer w-full bg-transparent pb-1.5 pt-5 text-base font-bold tracking-widest text-slate-900 placeholder-transparent outline-none"
+                  value={otp}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^0-9]/g, "");
+                    setOtp(val);
+                  }}
+                  placeholder="6-digit code"
+                  required
+                />
+                <label
+                  htmlFor="reset-otp"
+                  className="pointer-events-none absolute left-0 top-3.5 text-sm text-slate-400 transition-all duration-200
+                    peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-placeholder-shown:text-slate-400
+                    peer-focus:top-1 peer-focus:text-[11px] peer-focus:font-semibold peer-focus:text-blue-600
+                    peer-[&:not(:placeholder-shown)]:top-1 peer-[&:not(:placeholder-shown)]:text-[11px] peer-[&:not(:placeholder-shown)]:font-semibold peer-[&:not(:placeholder-shown)]:text-slate-500"
+                >
+                  6-digit verification code
+                </label>
+              </div>
+            </div>
+
+            {/* New password */}
             <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 transition focus-within:border-slate-400">
               <Lock className="h-4 w-4 shrink-0 text-slate-400" />
               <div className="relative flex-1">
@@ -221,6 +258,7 @@ function ResetPasswordForm() {
               </button>
             </div>
 
+            {/* Confirm password */}
             <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 transition focus-within:border-slate-400">
               <Lock className="h-4 w-4 shrink-0 text-slate-400" />
               <div className="relative flex-1">
@@ -259,10 +297,22 @@ function ResetPasswordForm() {
               </button>
             </div>
 
+            <div className="flex justify-end pt-1">
+              <button
+                type="button"
+                disabled={resending}
+                onClick={handleResendCode}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline disabled:opacity-60"
+              >
+                <RotateCw className={`h-3 w-3 ${resending ? "animate-spin" : ""}`} />
+                {resending ? "Sending code…" : "Resend 6-digit code"}
+              </button>
+            </div>
+
             <button
               type="submit"
               disabled={submitting}
-              className="mt-2 w-full rounded-2xl bg-slate-900 py-3.5 text-sm font-bold text-white transition hover:bg-slate-700 disabled:opacity-60"
+              className="mt-2 w-full rounded-2xl bg-slate-900 py-3.5 text-sm font-bold text-white transition hover:bg-slate-700 disabled:opacity-60 shadow-md"
             >
               {submitting ? "Resetting password…" : "Reset password"}
             </button>
@@ -299,4 +349,3 @@ export default function ResetPasswordPage() {
     </AuthPageShell>
   );
 }
-
