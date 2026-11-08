@@ -47,23 +47,21 @@ export default function ForgotPasswordPage() {
               <CheckCircle2 className="h-6 w-6" />
             </div>
             <h1 className="mt-4 text-2xl font-bold tracking-tight text-slate-900">
-              Check your inbox
+              Code Sent!
             </h1>
             <p className="mt-2 text-xs leading-relaxed text-slate-500">
               If an account is associated with{" "}
-              <strong className="text-slate-800">{submittedEmail}</strong>, we&apos;ve sent an email with a link to reset your password.
+              <strong className="text-slate-800">{submittedEmail}</strong>, we&apos;ve sent a 6-digit verification code to your email.
             </p>
 
-            <div className="mt-6 rounded-2xl bg-slate-50 p-4 text-left text-xs text-slate-600">
-              <p className="font-semibold text-slate-700">Didn&apos;t receive the email?</p>
-              <ul className="mt-1.5 list-inside list-disc space-y-1 text-slate-500">
-                <li>Check your spam or junk folder</li>
-                <li>Verify you typed the correct email address</li>
-                <li>Wait a couple minutes before requesting again</li>
-              </ul>
-            </div>
-
             <div className="mt-6 space-y-3">
+              <Link
+                href={`/reset-password?email=${encodeURIComponent(submittedEmail)}`}
+                className="inline-flex w-full items-center justify-center rounded-2xl bg-slate-900 py-3.5 text-sm font-bold text-white transition hover:bg-slate-700 shadow-md"
+              >
+                Enter 6-digit code →
+              </Link>
+
               <button
                 type="button"
                 onClick={() => {
@@ -78,7 +76,7 @@ export default function ForgotPasswordPage() {
 
               <Link
                 href="/login"
-                className="inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline"
+                className="inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline pt-1"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
                 Back to sign in
@@ -92,7 +90,7 @@ export default function ForgotPasswordPage() {
                 Forgot password?
               </h1>
               <p className="mt-1 text-sm font-medium text-blue-500">
-                Enter your email and we&apos;ll send you a reset link
+                Enter your email and we&apos;ll send you a 6-digit code
               </p>
             </div>
 
@@ -134,7 +132,7 @@ export default function ForgotPasswordPage() {
                 disabled={submitting}
                 className="w-full rounded-2xl bg-slate-900 py-3.5 text-sm font-bold text-white transition hover:bg-slate-700 disabled:opacity-60"
               >
-                {submitting ? "Sending reset link…" : "Send reset link"}
+                {submitting ? "Sending 6-digit code…" : "Send 6-digit code"}
               </button>
             </form>
 
