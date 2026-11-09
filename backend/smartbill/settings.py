@@ -203,7 +203,18 @@ DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='SmartBill Nepal <noreply
 # Frontend application URL (used in password reset links, etc.)
 FRONTEND_URL = env('FRONTEND_URL', default='http://localhost:3000').rstrip('/')
 
-
+REDIS_URL = env('REDIS_URL', default='')
+CACHES = {
+    'default': {
+        'BACKEND': (
+            'django.core.cache.backends.redis.RedisCache'
+            if REDIS_URL
+            else 'django.core.cache.backends.locmem.LocMemCache'
+        ),
+        'LOCATION': REDIS_URL or 'smartbill-nepal-default-cache',
+        'KEY_PREFIX': 'smartbill-nepal',
+    },
+}
 
 
 
