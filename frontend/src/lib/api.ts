@@ -189,7 +189,7 @@ export const authApi = {
     });
   },
   verifyOtp(payload: { email: string; otp: string }) {
-    return apiRequest<{ valid: boolean; message: string; username?: string }>(
+    return apiRequest<{ reset_token: string }>(
       "/api/auth/verify-otp/",
       {
         method: "POST",
@@ -198,7 +198,12 @@ export const authApi = {
       }
     );
   },
-  resetPassword(payload: { email: string; otp: string; new_password: string }) {
+  resetPassword(payload: {
+    email: string;
+    reset_token: string;
+    new_password: string;
+    new_password2: string;
+  }) {
     return apiRequest<{ message: string }>("/api/auth/reset-password/", {
       method: "POST",
       body: payload,
