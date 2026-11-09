@@ -1,17 +1,86 @@
+import hashlib
+import hmac
+import html
 import logging
+import re
+import secrets
+from urllib.parse import quote
+
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
+from django.core.cache import cache
 from django.core.mail import EmailMultiAlternatives
+from django.core.exceptions import ValidationError
+from django.db import transaction
 from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import PasswordResetOTP
 from .serializers import RegisterSerializer, UserSerializer
 
 logger = logging.getLogger(__name__)
+
+PASSWORD_RESET_TTL = 600
+PASSWORD_RESET_RATE_WINDOW = 3600
+PASSWORD_RESET_EMAIL_LIMIT = 3
+PASSWORD_RESET_IP_LIMIT = 10
+PASSWORD_RESET_MAX_ATTEMPTS = 5
+
+
+def _request_text(request, field, strip=True):
+    data = request.data
+    if not isinstance(data, dict):
+        return ''
+    value = data.get(field)
+    if not isinstance(value, str):
+        return ''
+    return value.strip() if strip else value
+
+
+def _password_reset_digest(value):
+    return hmac.new(
+        settings.SECRET_KEY.encode(),
+        value.encode(),
+        hashlib.sha256,
+    ).hexdigest()
+
+
+def _password_reset_key(kind, email):
+    email_digest = hashlib.sha256(email.lower().encode()).hexdigest()
+    return f'password-reset:{kind}:{email_digest}'
+
+
+def _increment_rate_limit(key):
+    if cache.add(key, 1, timeout=PASSWORD_RESET_RATE_WINDOW):
+        return 1
+    try:
+        return cache.incr(key)
+    except ValueError:
+        if cache.add(key, 1, timeout=PASSWORD_RESET_RATE_WINDOW):
+            return 1
+        return cache.incr(key)
+
+
+def _rate_limit_exceeded(request, email):
+    email_count = _increment_rate_limit(
+        _password_reset_key('request-email-rate', email)
+    )
+    ip_address = request.META.get('REMOTE_ADDR') or 'unknown'
+    ip_digest = hashlib.sha256(ip_address.encode()).hexdigest()
+    ip_count = _increment_rate_limit(
+        f'password-reset:request-ip-rate:{ip_digest}'
+    )
+    return (
+        email_count > PASSWORD_RESET_EMAIL_LIMIT
+        or ip_count > PASSWORD_RESET_IP_LIMIT
+    )
+
+
+def _password_reset_error(message, response_status=status.HTTP_400_BAD_REQUEST):
+    return Response({'detail': message}, status=response_status)
 
 
 def tokens_for_user(user):
@@ -154,30 +223,57 @@ class ForgotPasswordAPIView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
-        email = request.data.get('email', '').strip()
+        email = _request_text(request, 'email').lower()
         if not email:
             return Response(
                 {'detail': 'Email address is required.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        users = list(User.objects.filter(email__iexact=email, is_active=True))
+        if _rate_limit_exceeded(request, email):
+            response = _password_reset_error(
+                'Too many requests. Please try again later.',
+                status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+            response['Retry-After'] = str(PASSWORD_RESET_RATE_WINDOW)
+            return response
 
-        for user in users:
-            otp_record = PasswordResetOTP.generate_otp_for_user(user)
-            reset_url = f"{settings.FRONTEND_URL}/reset-password?email={user.email}&otp={otp_record.otp}"
+        otp_key = _password_reset_key('otp', email)
+        verified_key = _password_reset_key('verified', email)
+        cache.delete(otp_key)
+        cache.delete(verified_key)
+        user = User.objects.filter(email__iexact=email, is_active=True).first()
 
+        if user:
+            otp_code = f'{secrets.randbelow(900000) + 100000}'
+            nonce = secrets.token_urlsafe(16)
+            cache.set(
+                otp_key,
+                {
+                    'user_id': user.pk,
+                    'otp_digest': _password_reset_digest(f'{email}:{otp_code}'),
+                    'nonce': nonce,
+                },
+                timeout=PASSWORD_RESET_TTL,
+            )
+            reset_url = (
+                f'{settings.FRONTEND_URL}/reset-password'
+                f'?email={quote(user.email, safe="")}'
+            )
             display_name = user.first_name or user.username
-            subject = f"{otp_record.otp} is your SmartBill Nepal verification code"
+            display_name_html = html.escape(display_name)
+            username_html = html.escape(user.username)
+            reset_url_html = html.escape(reset_url, quote=True)
+            subject = f'{otp_code} is your SmartBill Nepal verification code'
 
             text_content = (
                 f"Hello {display_name},\n\n"
                 f"We received a request to reset your password for your SmartBill Nepal account ({user.username}).\n\n"
                 f"Your 6-digit verification code is:\n\n"
-                f"    {otp_record.otp}\n\n"
+                f"    {otp_code}\n\n"
                 f"This code will expire in 10 minutes.\n\n"
                 f"Enter this code on the password reset page:\n"
-                f"{settings.FRONTEND_URL}/reset-password?email={user.email}\n\n"
+                f"{reset_url}\n\n"
                 f"If you did not request a password reset, you can safely ignore this email.\n\n"
                 f"— The SmartBill Nepal Team"
             )
@@ -212,15 +308,15 @@ class ForgotPasswordAPIView(APIView):
                   <h1>SmartBill Nepal</h1>
                 </div>
                 <div class="content">
-                  <div class="greeting">Hello {display_name},</div>
+                  <div class="greeting">Hello {display_name_html},</div>
                   <div class="desc">
-                    We received a request to reset the password for your account (<strong>{user.username}</strong>).
+                    We received a request to reset the password for your account (<strong>{username_html}</strong>).
                     Use the 6-digit verification code below:
                   </div>
                   
                   <div class="otp-box">
                     <div class="otp-label">Verification Code</div>
-                    <div class="otp-code">{otp_record.otp}</div>
+                    <div class="otp-code">{otp_code}</div>
                   </div>
 
                   <div class="desc" style="text-align: center; font-size: 13px; color: #64748b;">
@@ -228,7 +324,7 @@ class ForgotPasswordAPIView(APIView):
                   </div>
 
                   <div class="btn-wrapper">
-                    <a href="{reset_url}" target="_blank" class="btn">Reset Password</a>
+                    <a href="{reset_url_html}" target="_blank" class="btn">Reset Password</a>
                   </div>
 
                   <div class="notice">
@@ -264,8 +360,8 @@ class VerifyOTPAPIView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
-        email = request.data.get('email', '').strip()
-        otp = request.data.get('otp', '').strip()
+        email = _request_text(request, 'email').lower()
+        otp = _request_text(request, 'otp')
 
         if not email or not otp:
             return Response(
@@ -273,78 +369,156 @@ class VerifyOTPAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        user = User.objects.filter(email__iexact=email, is_active=True).first()
-        if not user:
+        if not re.fullmatch(r'\d{6}', otp):
             return Response(
                 {'valid': False, 'detail': 'Invalid email address or code.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        otp_record = (
-            PasswordResetOTP.objects.filter(user=user, otp=otp, is_used=False)
-            .order_by('-created_at')
-            .first()
-        )
-        if not otp_record or not otp_record.is_valid():
+        otp_key = _password_reset_key('otp', email)
+        attempts_key = _password_reset_key('attempts', email)
+        otp_data = cache.get(otp_key)
+        if not otp_data:
             return Response(
                 {'valid': False, 'detail': 'Invalid or expired 6-digit verification code.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        return Response({
-            'valid': True,
-            'message': 'Verification code is valid.',
-            'username': user.username,
-        })
+        if cache.get(attempts_key, 0) >= PASSWORD_RESET_MAX_ATTEMPTS:
+            cache.delete(otp_key)
+            cache.delete(attempts_key)
+            return _password_reset_error(
+                'Too many failed verification attempts. Please request a new code.'
+            )
+
+        submitted_digest = _password_reset_digest(f'{email}:{otp}')
+        if not hmac.compare_digest(otp_data['otp_digest'], submitted_digest):
+            if not cache.add(attempts_key, 0, timeout=PASSWORD_RESET_TTL):
+                try:
+                    attempts = cache.incr(attempts_key)
+                except ValueError:
+                    cache.add(attempts_key, 0, timeout=PASSWORD_RESET_TTL)
+                    attempts = cache.incr(attempts_key)
+            else:
+                attempts = cache.incr(attempts_key)
+
+            if attempts >= PASSWORD_RESET_MAX_ATTEMPTS:
+                cache.delete(otp_key)
+                cache.delete(attempts_key)
+                message = (
+                    'Too many failed verification attempts. Please request a new code.'
+                )
+            else:
+                message = 'Invalid or expired 6-digit verification code.'
+            return _password_reset_error(message)
+
+        consumed_key = _password_reset_key(
+            f'consumed-otp:{otp_data["nonce"]}',
+            email,
+        )
+        if not cache.add(consumed_key, True, timeout=PASSWORD_RESET_TTL):
+            return _password_reset_error(
+                'Invalid or expired 6-digit verification code.'
+            )
+
+        cache.delete(otp_key)
+        cache.delete(attempts_key)
+        reset_token = secrets.token_urlsafe(32)
+        cache.set(
+            _password_reset_key('verified', email),
+            {
+                'user_id': otp_data['user_id'],
+                'token_digest': _password_reset_digest(
+                    f'{email}:{reset_token}'
+                ),
+            },
+            timeout=PASSWORD_RESET_TTL,
+        )
+        return Response({'reset_token': reset_token})
 
 
 class ResetPasswordAPIView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
-        email = request.data.get('email', '').strip()
-        otp = request.data.get('otp', '').strip()
-        new_password = request.data.get('new_password', '')
+        email = _request_text(request, 'email').lower()
+        reset_token = _request_text(request, 'reset_token')
+        new_password = _request_text(request, 'new_password', strip=False)
+        new_password2 = _request_text(request, 'new_password2', strip=False)
 
-        if not email or not otp or not new_password:
+        if not email or not reset_token or not new_password or not new_password2:
             return Response(
-                {'detail': 'Email, 6-digit OTP code, and new password are required.'},
+                {'detail': 'Email, reset token, and both password fields are required.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if len(new_password) < 8:
+        if new_password != new_password2:
             return Response(
-                {'detail': 'New password must be at least 8 characters long.'},
+                {'detail': 'Passwords do not match.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        user = User.objects.filter(email__iexact=email, is_active=True).first()
+        if (
+            len(new_password) < 8
+            or not re.search(r'[a-z]', new_password)
+            or not re.search(r'[A-Z]', new_password)
+            or not re.search(r'\d', new_password)
+            or not re.search(r'[^A-Za-z0-9]', new_password)
+        ):
+            return Response(
+                {
+                    'detail': (
+                        'Password must be at least 8 characters and include '
+                        'uppercase and lowercase letters, a number, and a special character.'
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        verified_key = _password_reset_key('verified', email)
+        verified_data = cache.get(verified_key)
+        submitted_digest = _password_reset_digest(f'{email}:{reset_token}')
+        if (
+            not verified_data
+            or not hmac.compare_digest(
+                verified_data['token_digest'],
+                submitted_digest,
+            )
+        ):
+            return Response(
+                {'detail': 'Invalid or expired reset token. Please verify your code again.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = User.objects.filter(
+            pk=verified_data['user_id'],
+            email__iexact=email,
+            is_active=True,
+        ).first()
         if not user:
-            return Response(
-                {'detail': 'Invalid email address or code.'},
-                status=status.HTTP_400_BAD_REQUEST,
+            return _password_reset_error(
+                'Invalid email address or reset token.'
             )
 
-        otp_record = (
-            PasswordResetOTP.objects.filter(user=user, otp=otp, is_used=False)
-            .order_by('-created_at')
-            .first()
+        try:
+            validate_password(new_password, user=user)
+        except ValidationError as error:
+            return _password_reset_error(' '.join(error.messages))
+
+        consumed_key = _password_reset_key(
+            f'consumed-token:{_password_reset_digest(reset_token)}',
+            email,
         )
-        if not otp_record or not otp_record.is_valid():
-            return Response(
-                {'detail': 'Invalid or expired 6-digit verification code.'},
-                status=status.HTTP_400_BAD_REQUEST,
+        if not cache.add(consumed_key, True, timeout=PASSWORD_RESET_TTL):
+            return _password_reset_error(
+                'Invalid or expired reset token. Please verify your code again.'
             )
 
-        user.set_password(new_password)
-        user.save()
-
-        # Mark OTP as used
-        otp_record.is_used = True
-        otp_record.save(update_fields=['is_used'])
+        cache.delete(verified_key)
+        with transaction.atomic():
+            user.set_password(new_password)
+            user.save(update_fields=['password'])
 
         return Response({
             'message': 'Password has been reset successfully. You can now log in with your new password.',
         })
-
-
