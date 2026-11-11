@@ -347,9 +347,19 @@ class ForgotPasswordAPIView(APIView):
                     to=[user.email],
                 )
                 msg.attach_alternative(html_content, "text/html")
-                msg.send(fail_silently=False)
-            except Exception as e:
-                logger.error("Failed to send password reset OTP email to %s: %s", user.email, e)
+                sent_count = msg.send(fail_silently=False)
+                if sent_count != 1:
+                    cache.delete(otp_key)
+                    logger.error(
+                        "Password reset OTP email delivery returned %s messages; "
+                        "the OTP was discarded.",
+                        sent_count,
+                    )
+            except Exception:
+                cache.delete(otp_key)
+                logger.exception(
+                    "Password reset OTP email delivery failed; the OTP was discarded."
+                )
 
         return Response({
             'message': 'If an account exists with this email, a 6-digit verification code has been sent.',
