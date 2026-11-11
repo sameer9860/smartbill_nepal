@@ -1,10 +1,13 @@
 import re
+from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.core import mail
 from django.core.cache import cache
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
+
+from .api_views import _password_reset_key
 
 
 @override_settings(
@@ -64,6 +67,21 @@ class PasswordResetFlowTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('If an account exists', response.data['message'])
         self.assertEqual(len(mail.outbox), 0)
+
+    @patch('accounts.api_views.EmailMultiAlternatives.send', side_effect=OSError('SMTP unavailable'))
+    def test_failed_email_delivery_discards_otp_and_keeps_generic_response(self, _send):
+        response = self.request_code()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('If an account exists', response.data['message'])
+        self.assertIsNone(cache.get(_password_reset_key('otp', self.user.email)))
+
+    @patch('accounts.api_views.EmailMultiAlternatives.send', return_value=0)
+    def test_zero_sent_messages_discards_otp(self, _send):
+        response = self.request_code()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(cache.get(_password_reset_key('otp', self.user.email)))
 
     def test_otp_is_consumed_and_reset_token_cannot_be_replayed(self):
         self.assertEqual(self.request_code().status_code, 200)
