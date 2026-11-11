@@ -62,11 +62,25 @@ class PasswordResetFlowTests(TestCase):
         self.assertRegex(self.code_from_email(), r'^\d{6}$')
 
     def test_unknown_email_gets_same_success_response_without_mail(self):
-        response = self.request_code('unknown@example.com')
+        unknown_email = 'unknown@example.com'
+        response = self.request_code(unknown_email)
 
         self.assertEqual(response.status_code, 200)
         self.assertIn('If an account exists', response.data['message'])
         self.assertEqual(len(mail.outbox), 0)
+        self.assertIsNone(cache.get(_password_reset_key('otp', unknown_email)))
+
+    def test_inactive_account_does_not_receive_a_code(self):
+        self.user.is_active = False
+        self.user.save(update_fields=['is_active'])
+
+        response = self.request_code()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertIsNone(
+            cache.get(_password_reset_key('otp', self.user.email))
+        )
 
     @patch('accounts.api_views.EmailMultiAlternatives.send', side_effect=OSError('SMTP unavailable'))
     def test_failed_email_delivery_discards_otp_and_keeps_generic_response(self, _send):
