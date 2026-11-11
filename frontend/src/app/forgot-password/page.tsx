@@ -47,11 +47,13 @@ export default function ForgotPasswordPage() {
               <CheckCircle2 className="h-6 w-6" />
             </div>
             <h1 className="mt-4 text-2xl font-bold tracking-tight text-slate-900">
-              Code Sent!
+              Check your email
             </h1>
             <p className="mt-2 text-xs leading-relaxed text-slate-500">
-              If an account is associated with{" "}
-              <strong className="text-slate-800">{submittedEmail}</strong>, we&apos;ve sent a 6-digit verification code to your email.
+              If{" "}
+              <strong className="text-slate-800">{submittedEmail}</strong>{" "}
+              belongs to an active SmartBill account, a 6-digit verification
+              code will be sent to that address. Otherwise, no code is sent.
             </p>
 
             <div className="mt-6 space-y-3">
@@ -151,4 +153,3 @@ export default function ForgotPasswordPage() {
     </AuthPageShell>
   );
 }
-
