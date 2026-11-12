@@ -355,11 +355,31 @@ class ForgotPasswordAPIView(APIView):
                         "the OTP was discarded.",
                         sent_count,
                     )
-            except Exception:
+                    return Response(
+                        {
+                            'detail': 'Unable to deliver verification email. Please try again.',
+                        },
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    )
+            except Exception as e:
                 cache.delete(otp_key)
                 logger.exception(
-                    "Password reset OTP email delivery failed; the OTP was discarded."
+                    "Password reset OTP email delivery failed: %s", e
                 )
+                return Response(
+                    {
+                        'detail': (
+                            f'Failed to send email ({type(e).__name__}). '
+                            'Please check email credentials and network access on the server.'
+                        ),
+                    },
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+        else:
+            logger.warning(
+                "Password reset requested for email '%s', but no active user was found in the database.",
+                email,
+            )
 
         return Response({
             'message': 'If an account exists with this email, a 6-digit verification code has been sent.',
