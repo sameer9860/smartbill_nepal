@@ -201,6 +201,9 @@ EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
 _default_from = f'SmartBill Nepal <{EMAIL_HOST_USER}>' if EMAIL_HOST_USER else 'SmartBill Nepal <noreply@smartbillnepal.com>'
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default=_default_from)
 EMAIL_TIMEOUT = env.int('EMAIL_TIMEOUT', default=10)
+
+# Resend API (used instead of SMTP for Railway deployments where SMTP ports are blocked)
+RESEND_API_KEY = env('RESEND_API_KEY', default='')
  
 # Frontend application URL (used in password reset links, etc.)
 FRONTEND_URL = env('FRONTEND_URL', default='http://localhost:3000').rstrip('/')
