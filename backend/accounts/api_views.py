@@ -11,7 +11,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.core.cache import cache
-from django.core.mail import EmailMultiAlternatives
+import resend
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from rest_framework import permissions, status
@@ -340,27 +340,15 @@ class ForgotPasswordAPIView(APIView):
             """
 
             try:
-                msg = EmailMultiAlternatives(
-                    subject=subject,
-                    body=text_content,
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    to=[user.email],
-                )
-                msg.attach_alternative(html_content, "text/html")
-                sent_count = msg.send(fail_silently=False)
-                if sent_count != 1:
-                    cache.delete(otp_key)
-                    logger.error(
-                        "Password reset OTP email delivery returned %s messages; "
-                        "the OTP was discarded.",
-                        sent_count,
-                    )
-                    return Response(
-                        {
-                            'detail': 'Unable to deliver verification email. Please try again.',
-                        },
-                        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    )
+                resend.api_key = settings.RESEND_API_KEY
+                params: resend.Emails.SendParams = {
+                    "from": settings.DEFAULT_FROM_EMAIL,
+                    "to": [user.email],
+                    "subject": subject,
+                    "html": html_content,
+                    "text": text_content,
+                }
+                resend.Emails.send(params)
             except Exception as e:
                 cache.delete(otp_key)
                 logger.exception(
@@ -370,7 +358,7 @@ class ForgotPasswordAPIView(APIView):
                     {
                         'detail': (
                             f'Failed to send email ({type(e).__name__}). '
-                            'Please check email credentials and network access on the server.'
+                            'Check RESEND_API_KEY and domain verification on resend.com.'
                         ),
                     },
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
