@@ -198,13 +198,14 @@ EMAIL_PORT = env.int('EMAIL_PORT', default=587)
 EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)
 EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
-DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='SmartBill Nepal <noreply@smartbillnepal.com>')
+_default_from = f'SmartBill Nepal <{EMAIL_HOST_USER}>' if EMAIL_HOST_USER else 'SmartBill Nepal <noreply@smartbillnepal.com>'
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default=_default_from)
 EMAIL_TIMEOUT = env.int('EMAIL_TIMEOUT', default=10)
  
 # Frontend application URL (used in password reset links, etc.)
 FRONTEND_URL = env('FRONTEND_URL', default='http://localhost:3000').rstrip('/')
 
-REDIS_URL = env('REDIS_URL', default='')
+REDIS_URL = env('REDIS_URL', default=env('REDIS_PRIVATE_URL', default=''))
 CACHES = {
     'default': {
         'BACKEND': (
