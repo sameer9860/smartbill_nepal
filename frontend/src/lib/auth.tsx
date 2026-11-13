@@ -21,6 +21,7 @@ type AuthContextValue = {
     username: string;
     email: string;
     password: string;
+    confirm_password?: string;
     store_name: string;
   }) => Promise<void>;
   logout: () => void;
@@ -74,6 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       username: string;
       email: string;
       password: string;
+      confirm_password?: string;
       store_name: string;
     }) => {
       const data = await authApi.register(payload);
