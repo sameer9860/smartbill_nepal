@@ -141,6 +141,7 @@ export const authApi = {
     username: string;
     email: string;
     password: string;
+    confirm_password?: string;
     store_name: string;
   }) {
     return apiRequest<AuthResponse>("/api/auth/register/", {
