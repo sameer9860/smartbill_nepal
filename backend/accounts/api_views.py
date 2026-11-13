@@ -121,6 +121,12 @@ class LoginAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        if ' ' in username or ' ' in password:
+            return Response(
+                {'detail': 'Username and password must not contain spaces.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         user = authenticate(request, username=username, password=password)
         if user is None:
             return Response(
