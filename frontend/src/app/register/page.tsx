@@ -3,18 +3,25 @@
 import {
   AlertCircle,
   Building2,
+  Check,
   Eye,
   EyeOff,
   Lock,
   Mail,
   User,
+  X,
 } from "lucide-react";
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, KeyboardEvent, useMemo, useState } from "react";
 
 import { AuthPageShell } from "@/components/AuthPageShell";
 import { ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+
+/** Block the space key on an input. */
+function blockSpace(e: KeyboardEvent<HTMLInputElement>) {
+  if (e.key === " ") e.preventDefault();
+}
 
 function FloatField({
   id,
@@ -49,6 +56,7 @@ function FloatField({
           className="peer w-full bg-transparent pb-1.5 pt-5 text-sm text-slate-900 placeholder-transparent outline-none"
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onKeyDown={blockSpace}
           placeholder={label}
           autoComplete={autoComplete}
           required={req}
@@ -69,6 +77,20 @@ function FloatField({
   );
 }
 
+/** Single password-rule indicator. */
+function Rule({ ok, label }: { ok: boolean; label: string }) {
+  return (
+    <li className="flex items-center gap-1.5">
+      {ok ? (
+        <Check className="h-3 w-3 text-emerald-500" />
+      ) : (
+        <X className="h-3 w-3 text-slate-300" />
+      )}
+      <span className={ok ? "text-emerald-600" : "text-slate-400"}>{label}</span>
+    </li>
+  );
+}
+
 export default function RegisterPage() {
   const { register } = useAuth();
   const [form, setForm] = useState({
@@ -76,8 +98,10 @@ export default function RegisterPage() {
     username: "",
     email: "",
     password: "",
+    confirm_password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -86,18 +110,61 @@ export default function RegisterPage() {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
+  /* ── real-time password strength checks ── */
+  const pw = form.password;
+  const checks = useMemo(
+    () => ({
+      minLen: pw.length >= 8,
+      upper: /[A-Z]/.test(pw),
+      lower: /[a-z]/.test(pw),
+      digit: /\d/.test(pw),
+      special: /[^A-Za-z0-9]/.test(pw),
+      noSpace: !/\s/.test(pw),
+      allowedChars: /^[A-Za-z0-9!@#$%^&*()_+\-=\[\]{}|;:'",.<>?/`~\\]*$/.test(pw),
+      noUsername:
+        !form.username || !pw || !pw.toLowerCase().includes(form.username.toLowerCase()),
+    }),
+    [pw, form.username]
+  );
+  const allValid =
+    checks.minLen &&
+    checks.upper &&
+    checks.lower &&
+    checks.digit &&
+    checks.special &&
+    checks.noSpace &&
+    checks.allowedChars &&
+    checks.noUsername;
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
     setFieldErrors({});
+
+    /* Client-side guard */
+    if (!allValid) {
+      setError("Please fix the password requirements below.");
+      return;
+    }
+    if (form.password !== form.confirm_password) {
+      setFieldErrors({ confirm_password: "Passwords do not match." });
+      return;
+    }
+
     setSubmitting(true);
     try {
-      await register(form);
+      await register({
+        username: form.username,
+        email: form.email,
+        password: form.password,
+        confirm_password: form.confirm_password,
+        store_name: form.store_name,
+      });
     } catch (err) {
       if (err instanceof ApiError && typeof err.data === "object" && err.data) {
         const data = err.data as Record<string, unknown>;
         const next: Record<string, string> = {};
-        for (const key of ["username", "email", "password", "store_name"]) {
+        for (const key of ["username", "email", "password", "confirm_password", "store_name"]) {
           const val = data[key];
           if (Array.isArray(val) && typeof val[0] === "string") {
             next[key] = val[0];
@@ -183,10 +250,11 @@ export default function RegisterPage() {
             )}
           </div>
 
+          {/* ── Password ── */}
           <div>
             <FloatField
               id="password"
-              label="Password (min. 8 chars)"
+              label="Password"
               type={showPassword ? "text" : "password"}
               icon={Lock}
               value={form.password}
@@ -210,6 +278,57 @@ export default function RegisterPage() {
             />
             {fieldErrors.password && (
               <p className="mt-1 pl-1 text-xs font-medium text-red-600">{fieldErrors.password}</p>
+            )}
+
+            {/* Password strength rules */}
+            {pw.length > 0 && (
+              <ul className="mt-2 grid grid-cols-2 gap-x-4 gap-y-0.5 pl-1 text-[11px] font-medium">
+                <Rule ok={checks.minLen} label="Min 8 characters" />
+                <Rule ok={checks.upper} label="Uppercase letter" />
+                <Rule ok={checks.lower} label="Lowercase letter" />
+                <Rule ok={checks.digit} label="Number" />
+                <Rule ok={checks.special} label="Special character" />
+                <Rule ok={checks.allowedChars && checks.noSpace} label="No spaces / emojis" />
+                {form.username && <Rule ok={checks.noUsername} label="Not your username" />}
+              </ul>
+            )}
+          </div>
+
+          {/* ── Confirm Password ── */}
+          <div>
+            <FloatField
+              id="confirm_password"
+              label="Confirm Password"
+              type={showConfirm ? "text" : "password"}
+              icon={Lock}
+              value={form.confirm_password}
+              onChange={(v) => update("confirm_password", v)}
+              autoComplete="new-password"
+              minLength={8}
+              extra={
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm(!showConfirm)}
+                  className="shrink-0 text-slate-400 transition hover:text-slate-600"
+                  title={showConfirm ? "Hide password" : "Show password"}
+                >
+                  {showConfirm ? (
+                    <Eye className="h-4 w-4 text-blue-600" />
+                  ) : (
+                    <EyeOff className="h-4 w-4" />
+                  )}
+                </button>
+              }
+            />
+            {fieldErrors.confirm_password && (
+              <p className="mt-1 pl-1 text-xs font-medium text-red-600">
+                {fieldErrors.confirm_password}
+              </p>
+            )}
+            {form.confirm_password.length > 0 && form.password !== form.confirm_password && (
+              <p className="mt-1 pl-1 text-xs font-medium text-amber-600">
+                Passwords do not match.
+              </p>
             )}
           </div>
 
