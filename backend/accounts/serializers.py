@@ -1,3 +1,5 @@
+import re
+
 from django.contrib.auth.models import User
 from django.db import transaction
 from rest_framework import serializers
@@ -70,9 +72,15 @@ class RegisterSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=150)
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True, min_length=8)
+    confirm_password = serializers.CharField(write_only=True, min_length=8)
     store_name = serializers.CharField(max_length=200)
 
+    # Allowed: letters, digits, and common special characters — no spaces or emojis.
+    _ALLOWED_PASSWORD_RE = re.compile(r'^[A-Za-z0-9!@#$%^&*()_+\-=\[\]{}|;:\'",.<>?/`~\\]+$')
+
     def validate_username(self, value):
+        if ' ' in value:
+            raise serializers.ValidationError('Username must not contain spaces.')
         if User.objects.filter(username__iexact=value).exists():
             raise serializers.ValidationError('A user with this username already exists.')
         return value
@@ -82,10 +90,41 @@ class RegisterSerializer(serializers.Serializer):
             raise serializers.ValidationError('A user with this email already exists.')
         return value
 
+    def validate_password(self, value):
+        if ' ' in value:
+            raise serializers.ValidationError('Password must not contain spaces.')
+        if not self._ALLOWED_PASSWORD_RE.match(value):
+            raise serializers.ValidationError(
+                'Password may only contain letters, numbers, and special characters — no spaces or emojis.'
+            )
+        if len(value) < 8:
+            raise serializers.ValidationError('Password must be at least 8 characters.')
+        if not re.search(r'[A-Z]', value):
+            raise serializers.ValidationError('Password must include at least one uppercase letter.')
+        if not re.search(r'[a-z]', value):
+            raise serializers.ValidationError('Password must include at least one lowercase letter.')
+        if not re.search(r'\d', value):
+            raise serializers.ValidationError('Password must include at least one number.')
+        if not re.search(r'[^A-Za-z0-9]', value):
+            raise serializers.ValidationError('Password must include at least one special character.')
+        return value
+
+    def validate(self, attrs):
+        if attrs.get('password') != attrs.get('confirm_password'):
+            raise serializers.ValidationError({'confirm_password': 'Passwords do not match.'})
+        username = attrs.get('username', '')
+        password = attrs.get('password', '')
+        if username and password and username.lower() in password.lower():
+            raise serializers.ValidationError(
+                {'password': 'Password must not contain your username.'}
+            )
+        return attrs
+
     @transaction.atomic
     def create(self, validated_data):
         store_name = validated_data.pop('store_name')
         password = validated_data.pop('password')
+        validated_data.pop('confirm_password', None)
 
         user = User.objects.create_user(
             username=validated_data['username'],
