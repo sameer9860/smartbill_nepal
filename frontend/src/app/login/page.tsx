@@ -2,7 +2,7 @@
 
 import { AlertCircle, Eye, EyeOff, Lock, User } from "lucide-react";
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, KeyboardEvent, useState } from "react";
 
 import { AuthPageShell } from "@/components/AuthPageShell";
 import { ApiError } from "@/lib/api";
@@ -15,6 +15,13 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  /** Block the space key on an input. */
+  function blockSpace(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key === " " || e.code === "Space" || e.keyCode === 32) {
+      e.preventDefault();
+    }
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -60,7 +67,8 @@ export default function LoginPage() {
                 type="text"
                 className="peer w-full bg-transparent pb-1.5 pt-5 text-sm text-slate-900 placeholder-transparent outline-none"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e) => setUsername(e.target.value.replace(/\s/g, ""))}
+                onKeyDown={blockSpace}
                 placeholder="Username"
                 autoComplete="username"
                 required
@@ -85,7 +93,8 @@ export default function LoginPage() {
                 type={showPassword ? "text" : "password"}
                 className="peer w-full bg-transparent pb-1.5 pt-5 text-sm text-slate-900 placeholder-transparent outline-none"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => setPassword(e.target.value.replace(/\s/g, ""))}
+                onKeyDown={blockSpace}
                 placeholder="Password"
                 autoComplete="current-password"
                 required
