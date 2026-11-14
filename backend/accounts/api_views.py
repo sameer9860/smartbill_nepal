@@ -164,14 +164,31 @@ class ProfileUpdateAPIView(APIView):
 class ChangePasswordAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
+    ALLOWED_PASSWORD_RE = re.compile(
+        r'^[A-Za-z0-9!@#$%^&*()_+\-=\[\]{}|;:\'",.<>?/`~\\]+$'
+    )
+
     def post(self, request):
         user = request.user
         old_password = request.data.get('old_password', '')
         new_password = request.data.get('new_password', '')
+        confirm_password = request.data.get('confirm_password', '')
 
         if not old_password or not new_password:
             return Response(
                 {'detail': 'Both old and new passwords are required.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if ' ' in old_password or ' ' in new_password or ' ' in confirm_password:
+            return Response(
+                {'detail': 'Passwords must not contain spaces.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if confirm_password and new_password != confirm_password:
+            return Response(
+                {'detail': 'Passwords do not match.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -184,6 +201,47 @@ class ChangePasswordAPIView(APIView):
         if len(new_password) < 8:
             return Response(
                 {'detail': 'New password must be at least 8 characters.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not self.ALLOWED_PASSWORD_RE.match(new_password):
+            return Response(
+                {
+                    'detail': (
+                        'New password may only contain letters, numbers, and '
+                        'special characters — no spaces or emojis.'
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not re.search(r'[A-Z]', new_password):
+            return Response(
+                {'detail': 'New password must include at least one uppercase letter.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not re.search(r'[a-z]', new_password):
+            return Response(
+                {'detail': 'New password must include at least one lowercase letter.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not re.search(r'\d', new_password):
+            return Response(
+                {'detail': 'New password must include at least one number.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not re.search(r'[^A-Za-z0-9]', new_password):
+            return Response(
+                {'detail': 'New password must include at least one special character.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if user.username and user.username.lower() in new_password.lower():
+            return Response(
+                {'detail': 'New password must not contain your username.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
