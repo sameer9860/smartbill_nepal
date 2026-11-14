@@ -170,7 +170,11 @@ export const authApi = {
       body: payload,
     });
   },
-  changePassword(payload: { old_password: string; new_password: string }) {
+  changePassword(payload: {
+    old_password: string;
+    new_password: string;
+    confirm_password?: string;
+  }) {
     return apiRequest<{ message: string }>("/api/auth/change-password/", {
       method: "POST",
       body: payload,
