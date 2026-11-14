@@ -150,3 +150,158 @@ class RegistrationValidationTests(TestCase):
         self.assertEqual(resp.status_code, 400)
         self.assertIn('must not contain spaces', resp.data['detail'])
 
+
+class ChangePasswordValidationTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            username='janedoe',
+            email='jane@example.com',
+            password='OldPassword123!',
+        )
+        self.client.force_authenticate(user=self.user)
+
+    def test_valid_change_password(self):
+        resp = self.client.post(
+            '/api/auth/change-password/',
+            {
+                'old_password': 'OldPassword123!',
+                'new_password': 'NewStrongP@ss1!',
+                'confirm_password': 'NewStrongP@ss1!',
+            },
+            format='json',
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password('NewStrongP@ss1!'))
+
+    def test_change_password_mismatch(self):
+        resp = self.client.post(
+            '/api/auth/change-password/',
+            {
+                'old_password': 'OldPassword123!',
+                'new_password': 'NewStrongP@ss1!',
+                'confirm_password': 'DifferentP@ss1!',
+            },
+            format='json',
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn('Passwords do not match', resp.data['detail'])
+
+    def test_change_password_with_space(self):
+        resp = self.client.post(
+            '/api/auth/change-password/',
+            {
+                'old_password': 'OldPassword123!',
+                'new_password': 'New Strong1!',
+                'confirm_password': 'New Strong1!',
+            },
+            format='json',
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn('must not contain spaces', resp.data['detail'])
+
+    def test_change_password_with_emoji(self):
+        resp = self.client.post(
+            '/api/auth/change-password/',
+            {
+                'old_password': 'OldPassword123!',
+                'new_password': 'NewStrong1!😊',
+                'confirm_password': 'NewStrong1!😊',
+            },
+            format='json',
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn('no spaces or emojis', resp.data['detail'])
+
+    def test_change_password_containing_username(self):
+        resp = self.client.post(
+            '/api/auth/change-password/',
+            {
+                'old_password': 'OldPassword123!',
+                'new_password': 'JaneDoe!12345',
+                'confirm_password': 'JaneDoe!12345',
+            },
+            format='json',
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn('must not contain your username', resp.data['detail'])
+
+    def test_change_password_missing_uppercase(self):
+        resp = self.client.post(
+            '/api/auth/change-password/',
+            {
+                'old_password': 'OldPassword123!',
+                'new_password': 'lowercase123!',
+                'confirm_password': 'lowercase123!',
+            },
+            format='json',
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn('uppercase', resp.data['detail'])
+
+    def test_change_password_missing_lowercase(self):
+        resp = self.client.post(
+            '/api/auth/change-password/',
+            {
+                'old_password': 'OldPassword123!',
+                'new_password': 'UPPERCASE123!',
+                'confirm_password': 'UPPERCASE123!',
+            },
+            format='json',
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn('lowercase', resp.data['detail'])
+
+    def test_change_password_missing_number(self):
+        resp = self.client.post(
+            '/api/auth/change-password/',
+            {
+                'old_password': 'OldPassword123!',
+                'new_password': 'NoNumberHere!',
+                'confirm_password': 'NoNumberHere!',
+            },
+            format='json',
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn('number', resp.data['detail'])
+
+    def test_change_password_missing_special(self):
+        resp = self.client.post(
+            '/api/auth/change-password/',
+            {
+                'old_password': 'OldPassword123!',
+                'new_password': 'NoSpecialChar1',
+                'confirm_password': 'NoSpecialChar1',
+            },
+            format='json',
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn('special character', resp.data['detail'])
+
+    def test_change_password_too_short(self):
+        resp = self.client.post(
+            '/api/auth/change-password/',
+            {
+                'old_password': 'OldPassword123!',
+                'new_password': 'Sh1!',
+                'confirm_password': 'Sh1!',
+            },
+            format='json',
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn('at least 8 characters', resp.data['detail'])
+
+    def test_change_password_incorrect_old_password(self):
+        resp = self.client.post(
+            '/api/auth/change-password/',
+            {
+                'old_password': 'WrongPassword123!',
+                'new_password': 'NewValidPass1!',
+                'confirm_password': 'NewValidPass1!',
+            },
+            format='json',
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn('Current password is incorrect', resp.data['detail'])
+
