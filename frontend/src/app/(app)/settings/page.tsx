@@ -14,7 +14,7 @@ import {
   Type,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { PageHeader } from "@/components/PageHeader";
 import { ApiError, authApi, clearTokens } from "@/lib/api";
@@ -22,12 +22,12 @@ import { useAuth } from "@/lib/auth";
 
 const CONFIRM_PHRASE = "delete-my-account";
 
-const RULES = [
-  { test: (p: string) => p.length >= 8, label: "At least 8 characters" },
-  { test: (p: string) => /[A-Z]/.test(p), label: "One uppercase letter" },
-  { test: (p: string) => /[0-9]/.test(p), label: "One number" },
-  { test: (p: string) => /[^A-Za-z0-9]/.test(p), label: "One special character" },
-];
+/** Block the space key on an input. */
+function blockSpace(e: React.KeyboardEvent<HTMLInputElement>) {
+  if (e.key === " " || e.code === "Space" || e.keyCode === 32) {
+    e.preventDefault();
+  }
+}
 
 const floatLabelClass =
   "pointer-events-none absolute left-0 top-3.5 text-sm text-slate-400 transition-all duration-200 peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-placeholder-shown:text-slate-400 peer-focus:top-1 peer-focus:text-[11px] peer-focus:font-semibold peer-focus:text-blue-600 peer-[&:not(:placeholder-shown)]:top-1 peer-[&:not(:placeholder-shown)]:text-[11px] peer-[&:not(:placeholder-shown)]:font-semibold peer-[&:not(:placeholder-shown)]:text-slate-500";
@@ -42,6 +42,7 @@ function FloatField({
   icon: Icon,
   value,
   onChange,
+  onKeyDown,
   autoComplete,
   required: req = true,
   minLength,
@@ -56,6 +57,7 @@ function FloatField({
   icon: React.ElementType;
   value: string;
   onChange: (v: string) => void;
+  onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
   autoComplete?: string;
   required?: boolean;
   minLength?: number;
@@ -78,6 +80,7 @@ function FloatField({
           className={`${floatInputClass} ${mono ? "font-mono tracking-normal" : ""}`}
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onKeyDown={onKeyDown}
           placeholder={label}
           autoComplete={autoComplete}
           required={req}
@@ -137,18 +140,54 @@ export default function SettingsPage() {
   const [deleteError, setDeleteError] = useState("");
   const [deleteBusy, setDeleteBusy] = useState(false);
 
-  const strength = RULES.filter((r) => r.test(newPassword)).length;
-  const strengthPct = (strength / RULES.length) * 100;
+  /* ── real-time password strength checks ── */
+  const username = user?.username || "";
+  const checks = useMemo(
+    () => ({
+      minLen: newPassword.length >= 8,
+      upper: /[A-Z]/.test(newPassword),
+      lower: /[a-z]/.test(newPassword),
+      digit: /\d/.test(newPassword),
+      special: /[^A-Za-z0-9]/.test(newPassword),
+      noSpace: !/\s/.test(newPassword),
+      allowedChars: /^[A-Za-z0-9!@#$%^&*()_+\-=\[\]{}|;:'",.<>?/`~\\]*$/.test(newPassword),
+      noUsername:
+        !username || !newPassword || !newPassword.toLowerCase().includes(username.toLowerCase()),
+    }),
+    [newPassword, username]
+  );
+
+  const allValid =
+    checks.minLen &&
+    checks.upper &&
+    checks.lower &&
+    checks.digit &&
+    checks.special &&
+    checks.noSpace &&
+    checks.allowedChars &&
+    checks.noUsername;
+
+  const validCount = [
+    checks.minLen,
+    checks.upper,
+    checks.lower,
+    checks.digit,
+    checks.special,
+    checks.noSpace && checks.allowedChars,
+    checks.noUsername,
+  ].filter(Boolean).length;
+  const totalRules = 7;
+  const strengthPct = (validCount / totalRules) * 100;
   const strengthColor =
-    strength <= 1
+    validCount <= 2
       ? "bg-red-500"
-      : strength === 2
+      : validCount <= 4
         ? "bg-amber-500"
-        : strength === 3
+        : validCount < totalRules
           ? "bg-yellow-400"
           : "bg-emerald-500";
   const strengthLabel =
-    strength <= 1 ? "Weak" : strength === 2 ? "Fair" : strength === 3 ? "Good" : "Strong";
+    validCount <= 2 ? "Weak" : validCount <= 4 ? "Fair" : validCount < totalRules ? "Good" : "Strong";
 
   const passwordReady = deletePassword.trim().length > 0;
   const phraseReady = confirmInput === CONFIRM_PHRASE;
@@ -158,12 +197,15 @@ export default function SettingsPage() {
     e.preventDefault();
     setPwError("");
     setPwMessage("");
-    if (newPassword !== confirm) {
-      setPwError("New password and confirmation do not match.");
+
+    if (!allValid) {
+      setPwError(
+        "Password must be at least 8 characters, include uppercase, lowercase, number, special character, no spaces or emojis, and cannot contain your username."
+      );
       return;
     }
-    if (newPassword.length < 8) {
-      setPwError("New password must be at least 8 characters.");
+    if (newPassword !== confirm) {
+      setPwError("New password and confirmation do not match.");
       return;
     }
     setPwBusy(true);
@@ -171,6 +213,7 @@ export default function SettingsPage() {
       const res = await authApi.changePassword({
         old_password: oldPassword,
         new_password: newPassword,
+        confirm_password: confirm,
       });
       setPwMessage(res.message);
       setOldPassword("");
@@ -248,7 +291,8 @@ export default function SettingsPage() {
             type={showOld ? "text" : "password"}
             icon={Lock}
             value={oldPassword}
-            onChange={setOldPassword}
+            onChange={(v) => setOldPassword(v.replace(/\s/g, ""))}
+            onKeyDown={blockSpace}
             autoComplete="current-password"
             extra={<PasswordToggle shown={showOld} onToggle={() => setShowOld((v) => !v)} />}
           />
@@ -260,7 +304,8 @@ export default function SettingsPage() {
               type={showNew ? "text" : "password"}
               icon={KeyRound}
               value={newPassword}
-              onChange={setNewPassword}
+              onChange={(v) => setNewPassword(v.replace(/\s/g, ""))}
+              onKeyDown={blockSpace}
               autoComplete="new-password"
               minLength={8}
               extra={<PasswordToggle shown={showNew} onToggle={() => setShowNew((v) => !v)} />}
@@ -272,11 +317,11 @@ export default function SettingsPage() {
                   <span className="text-[var(--ink-muted)]">Password strength:</span>
                   <span
                     className={`font-semibold ${
-                      strength <= 1
+                      validCount <= 2
                         ? "text-red-600"
-                        : strength === 2
+                        : validCount <= 4
                           ? "text-amber-600"
-                          : strength === 3
+                          : validCount < totalRules
                             ? "text-yellow-600"
                             : "text-emerald-600"
                     }`}
@@ -291,22 +336,82 @@ export default function SettingsPage() {
                   />
                 </div>
                 <ul className="grid grid-cols-2 gap-1 pt-1">
-                  {RULES.map((rule) => {
-                    const pass = rule.test(newPassword);
-                    return (
-                      <li
-                        key={rule.label}
-                        className={`flex items-center gap-1 text-[11px] ${
-                          pass ? "text-emerald-600" : "text-[var(--ink-muted)]"
+                  <li
+                    className={`flex items-center gap-1 text-[11px] ${
+                      checks.minLen ? "text-emerald-600" : "text-[var(--ink-muted)]"
+                    }`}
+                  >
+                    <CheckCircle2
+                      className={`h-3.5 w-3.5 shrink-0 ${checks.minLen ? "text-emerald-500" : "opacity-30"}`}
+                    />
+                    Min 8 characters
+                  </li>
+                  <li
+                    className={`flex items-center gap-1 text-[11px] ${
+                      checks.upper ? "text-emerald-600" : "text-[var(--ink-muted)]"
+                    }`}
+                  >
+                    <CheckCircle2
+                      className={`h-3.5 w-3.5 shrink-0 ${checks.upper ? "text-emerald-500" : "opacity-30"}`}
+                    />
+                    Uppercase letter
+                  </li>
+                  <li
+                    className={`flex items-center gap-1 text-[11px] ${
+                      checks.lower ? "text-emerald-600" : "text-[var(--ink-muted)]"
+                    }`}
+                  >
+                    <CheckCircle2
+                      className={`h-3.5 w-3.5 shrink-0 ${checks.lower ? "text-emerald-500" : "opacity-30"}`}
+                    />
+                    Lowercase letter
+                  </li>
+                  <li
+                    className={`flex items-center gap-1 text-[11px] ${
+                      checks.digit ? "text-emerald-600" : "text-[var(--ink-muted)]"
+                    }`}
+                  >
+                    <CheckCircle2
+                      className={`h-3.5 w-3.5 shrink-0 ${checks.digit ? "text-emerald-500" : "opacity-30"}`}
+                    />
+                    Number
+                  </li>
+                  <li
+                    className={`flex items-center gap-1 text-[11px] ${
+                      checks.special ? "text-emerald-600" : "text-[var(--ink-muted)]"
+                    }`}
+                  >
+                    <CheckCircle2
+                      className={`h-3.5 w-3.5 shrink-0 ${checks.special ? "text-emerald-500" : "opacity-30"}`}
+                    />
+                    Special character
+                  </li>
+                  <li
+                    className={`flex items-center gap-1 text-[11px] ${
+                      checks.noSpace && checks.allowedChars ? "text-emerald-600" : "text-[var(--ink-muted)]"
+                    }`}
+                  >
+                    <CheckCircle2
+                      className={`h-3.5 w-3.5 shrink-0 ${
+                        checks.noSpace && checks.allowedChars ? "text-emerald-500" : "opacity-30"
+                      }`}
+                    />
+                    No spaces / emojis
+                  </li>
+                  {username ? (
+                    <li
+                      className={`flex items-center gap-1 text-[11px] ${
+                        checks.noUsername ? "text-emerald-600" : "text-[var(--ink-muted)]"
+                      }`}
+                    >
+                      <CheckCircle2
+                        className={`h-3.5 w-3.5 shrink-0 ${
+                          checks.noUsername ? "text-emerald-500" : "opacity-30"
                         }`}
-                      >
-                        <CheckCircle2
-                          className={`h-3.5 w-3.5 shrink-0 ${pass ? "text-emerald-500" : "opacity-30"}`}
-                        />
-                        {rule.label}
-                      </li>
-                    );
-                  })}
+                      />
+                      Not your username
+                    </li>
+                  ) : null}
                 </ul>
               </div>
             ) : null}
@@ -319,7 +424,8 @@ export default function SettingsPage() {
               type={showConfirm ? "text" : "password"}
               icon={KeyRound}
               value={confirm}
-              onChange={setConfirm}
+              onChange={(v) => setConfirm(v.replace(/\s/g, ""))}
+              onKeyDown={blockSpace}
               autoComplete="new-password"
               minLength={8}
               borderClass={
@@ -344,7 +450,14 @@ export default function SettingsPage() {
             <button
               type="submit"
               className="btn-primary"
-              disabled={pwBusy || !oldPassword || !newPassword || newPassword !== confirm}
+              disabled={
+                pwBusy ||
+                !oldPassword ||
+                !newPassword ||
+                !confirm ||
+                newPassword !== confirm ||
+                !allValid
+              }
             >
               {pwBusy ? "Updating Password…" : "Update Password"}
             </button>
@@ -405,7 +518,8 @@ export default function SettingsPage() {
               type={showDeletePassword ? "text" : "password"}
               icon={Lock}
               value={deletePassword}
-              onChange={setDeletePassword}
+              onChange={(v) => setDeletePassword(v.replace(/\s/g, ""))}
+              onKeyDown={blockSpace}
               autoComplete="current-password"
               borderClass="border-red-200 bg-white"
               extra={
