@@ -157,6 +157,8 @@ export default function SettingsPage() {
     [newPassword, username]
   );
 
+  const isSameAsOld = Boolean(oldPassword && newPassword && oldPassword === newPassword);
+
   const allValid =
     checks.minLen &&
     checks.upper &&
@@ -165,7 +167,8 @@ export default function SettingsPage() {
     checks.special &&
     checks.noSpace &&
     checks.allowedChars &&
-    checks.noUsername;
+    checks.noUsername &&
+    !isSameAsOld;
 
   const validCount = [
     checks.minLen,
@@ -198,6 +201,10 @@ export default function SettingsPage() {
     setPwError("");
     setPwMessage("");
 
+    if (isSameAsOld) {
+      setPwError("New password cannot be the same as your current password.");
+      return;
+    }
     if (!allValid) {
       setPwError(
         "Password must be at least 8 characters, include uppercase, lowercase, number, special character, no spaces or emojis, and cannot contain your username."
@@ -412,8 +419,27 @@ export default function SettingsPage() {
                       Not your username
                     </li>
                   ) : null}
+                  {oldPassword ? (
+                    <li
+                      className={`flex items-center gap-1 text-[11px] ${
+                        !isSameAsOld ? "text-emerald-600" : "text-[var(--ink-muted)]"
+                      }`}
+                    >
+                      <CheckCircle2
+                        className={`h-3.5 w-3.5 shrink-0 ${
+                          !isSameAsOld ? "text-emerald-500" : "opacity-30"
+                        }`}
+                      />
+                      Different from current
+                    </li>
+                  ) : null}
                 </ul>
               </div>
+            ) : null}
+            {isSameAsOld ? (
+              <p className="mt-1.5 px-1 text-xs font-medium text-amber-600">
+                New password cannot be the same as your current password.
+              </p>
             ) : null}
           </div>
 
@@ -456,6 +482,7 @@ export default function SettingsPage() {
                 !newPassword ||
                 !confirm ||
                 newPassword !== confirm ||
+                isSameAsOld ||
                 !allValid
               }
             >
