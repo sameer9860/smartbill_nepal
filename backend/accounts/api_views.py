@@ -198,6 +198,12 @@ class ChangePasswordAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        if old_password == new_password or user.check_password(new_password):
+            return Response(
+                {'detail': 'New password cannot be the same as your current password.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         if len(new_password) < 8:
             return Response(
                 {'detail': 'New password must be at least 8 characters.'},
