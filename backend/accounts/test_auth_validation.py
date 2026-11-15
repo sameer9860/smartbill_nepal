@@ -305,3 +305,16 @@ class ChangePasswordValidationTests(TestCase):
         self.assertEqual(resp.status_code, 400)
         self.assertIn('Current password is incorrect', resp.data['detail'])
 
+    def test_change_password_cannot_be_same_as_current(self):
+        resp = self.client.post(
+            '/api/auth/change-password/',
+            {
+                'old_password': 'OldPassword123!',
+                'new_password': 'OldPassword123!',
+                'confirm_password': 'OldPassword123!',
+            },
+            format='json',
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn('cannot be the same as your current password', resp.data['detail'])
+
