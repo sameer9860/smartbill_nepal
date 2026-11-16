@@ -108,6 +108,74 @@ class RegisterAPIView(APIView):
         )
 
 
+class CheckUsernameAPIView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        username = request.query_params.get('username', '').strip()
+        if not username:
+            return Response({'available': True, 'suggestions': []})
+
+        if ' ' in username:
+            return Response(
+                {
+                    'available': False,
+                    'detail': 'Username must not contain spaces.',
+                    'suggestions': [],
+                }
+            )
+
+        taken = User.objects.filter(username__iexact=username).exists()
+        if not taken:
+            return Response({'available': True, 'suggestions': []})
+
+        base = username[:140]
+        suggestions = []
+        seen = {username.lower()}
+
+        candidate_patterns = [
+            lambda: f"{base}{secrets.randbelow(90) + 10}",
+            lambda: f"{base}_{secrets.randbelow(90) + 10}",
+            lambda: f"{base}{secrets.randbelow(900) + 100}",
+            lambda: f"{base}_sb",
+            lambda: f"{base}_np",
+            lambda: f"{base}_store",
+            lambda: f"{base}01",
+            lambda: f"{base}99",
+            lambda: f"{base}_{secrets.token_hex(2)}",
+        ]
+
+        for pat in candidate_patterns:
+            candidate = pat()
+            cand_lower = candidate.lower()
+            if cand_lower in seen:
+                continue
+            seen.add(cand_lower)
+            if not User.objects.filter(username__iexact=candidate).exists():
+                suggestions.append(candidate)
+                if len(suggestions) >= 3:
+                    break
+
+        attempts = 0
+        while len(suggestions) < 3 and attempts < 25:
+            attempts += 1
+            candidate = f"{base}_{secrets.randbelow(9000) + 1000}"
+            cand_lower = candidate.lower()
+            if cand_lower in seen:
+                continue
+            seen.add(cand_lower)
+            if not User.objects.filter(username__iexact=candidate).exists():
+                suggestions.append(candidate)
+
+        return Response(
+            {
+                'available': False,
+                'detail': 'Username is already taken.',
+                'suggestions': suggestions[:3],
+            }
+        )
+
+
 class LoginAPIView(APIView):
     permission_classes = [permissions.AllowAny]
 
