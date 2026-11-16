@@ -318,3 +318,38 @@ class ChangePasswordValidationTests(TestCase):
         self.assertEqual(resp.status_code, 400)
         self.assertIn('cannot be the same as your current password', resp.data['detail'])
 
+
+class CheckUsernameAPITests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.existing_user = User.objects.create_user(
+            username='samir',
+            email='samir@example.com',
+            password='Password123!',
+        )
+
+    def test_check_username_available(self):
+        resp = self.client.get('/api/auth/check-username/?username=brandnewuser')
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(resp.data['available'])
+        self.assertEqual(resp.data['suggestions'], [])
+
+    def test_check_username_taken_returns_3_unique_suggestions(self):
+        resp = self.client.get('/api/auth/check-username/?username=samir')
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(resp.data['available'])
+        self.assertIn('already taken', resp.data['detail'])
+        suggestions = resp.data['suggestions']
+        self.assertEqual(len(suggestions), 3)
+        # All 3 suggestions must be distinct
+        self.assertEqual(len(set(s.lower() for s in suggestions)), 3)
+        # None of the 3 suggestions should already exist in DB
+        for s in suggestions:
+            self.assertFalse(User.objects.filter(username__iexact=s).exists())
+
+    def test_check_username_with_space(self):
+        resp = self.client.get('/api/auth/check-username/?username=samir+nepal')
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(resp.data['available'])
+        self.assertIn('must not contain spaces', resp.data['detail'])
+
