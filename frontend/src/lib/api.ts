@@ -137,6 +137,16 @@ export async function apiRequest<T>(
 }
 
 export const authApi = {
+  checkUsername(username: string) {
+    return apiRequest<{
+      available: boolean;
+      detail?: string;
+      suggestions: string[];
+    }>(`/api/auth/check-username/?username=${encodeURIComponent(username)}`, {
+      method: "GET",
+      auth: false,
+    });
+  },
   register(payload: {
     username: string;
     email: string;
