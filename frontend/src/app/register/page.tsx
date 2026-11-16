@@ -12,10 +12,10 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { FormEvent, KeyboardEvent, useMemo, useState } from "react";
+import { FormEvent, KeyboardEvent, useEffect, useMemo, useState } from "react";
 
 import { AuthPageShell } from "@/components/AuthPageShell";
-import { ApiError } from "@/lib/api";
+import { ApiError, authApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
 /** Block the space key on an input. */
@@ -106,8 +106,65 @@ export default function RegisterPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
 
+  const [usernameChecking, setUsernameChecking] = useState(false);
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+  const [usernameSuggestions, setUsernameSuggestions] = useState<string[]>([]);
+  const [usernameFeedback, setUsernameFeedback] = useState<string>("");
+
   function update(field: keyof typeof form, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  /* ── real-time username availability check with debounce ── */
+  useEffect(() => {
+    const raw = form.username.trim();
+    if (!raw) {
+      setUsernameChecking(false);
+      setUsernameAvailable(null);
+      setUsernameSuggestions([]);
+      setUsernameFeedback("");
+      return;
+    }
+
+    let active = true;
+    setUsernameChecking(true);
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await authApi.checkUsername(raw);
+        if (!active) return;
+        if (res.available) {
+          setUsernameAvailable(true);
+          setUsernameSuggestions([]);
+          setUsernameFeedback("Username is available");
+        } else {
+          setUsernameAvailable(false);
+          setUsernameSuggestions(res.suggestions || []);
+          setUsernameFeedback(res.detail || "Username is already taken.");
+        }
+      } catch {
+        if (!active) return;
+      } finally {
+        if (active) setUsernameChecking(false);
+      }
+    }, 300);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [form.username]);
+
+  function pickSuggestion(suggested: string) {
+    update("username", suggested);
+    setUsernameAvailable(true);
+    setUsernameSuggestions([]);
+    setUsernameFeedback("Username is available");
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      delete next.username;
+      return next;
+    });
   }
 
   /* ── real-time password strength checks ── */
@@ -142,6 +199,10 @@ export default function RegisterPage() {
     setFieldErrors({});
 
     /* Client-side guard */
+    if (usernameAvailable === false) {
+      setFieldErrors({ username: "Username is already taken. Please choose another." });
+      return;
+    }
     if (!allValid) {
       setError("Please fix the password requirements below.");
       return;
@@ -227,11 +288,61 @@ export default function RegisterPage() {
               label="Username"
               icon={User}
               value={form.username}
-              onChange={(v) => update("username", v)}
+              onChange={(v) => {
+                update("username", v);
+                if (fieldErrors.username) {
+                  setFieldErrors((prev) => {
+                    const next = { ...prev };
+                    delete next.username;
+                    return next;
+                  });
+                }
+              }}
               autoComplete="username"
             />
-            {fieldErrors.username && (
+            {fieldErrors.username ? (
               <p className="mt-1 pl-1 text-xs font-medium text-red-600">{fieldErrors.username}</p>
+            ) : usernameChecking ? (
+              <p className="mt-1 pl-1 text-xs font-medium text-slate-400 animate-pulse">
+                Checking availability…
+              </p>
+            ) : usernameFeedback ? (
+              <p
+                className={`mt-1 pl-1 text-xs font-medium ${
+                  usernameAvailable === false
+                    ? "text-red-600"
+                    : usernameAvailable === true
+                      ? "text-emerald-600"
+                      : "text-slate-500"
+                }`}
+              >
+                {usernameAvailable === false ? (
+                  usernameFeedback
+                ) : usernameAvailable === true ? (
+                  `✓ ${usernameFeedback}`
+                ) : null}
+              </p>
+            ) : null}
+
+            {usernameAvailable === false && usernameSuggestions.length > 0 && (
+              <div className="mt-2 pl-1">
+                <span className="text-[11px] font-medium text-slate-500">
+                  Available suggestions:
+                </span>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  {usernameSuggestions.map((sug) => (
+                    <button
+                      key={sug}
+                      type="button"
+                      onClick={() => pickSuggestion(sug)}
+                      className="inline-flex items-center rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 transition hover:border-blue-300 hover:bg-blue-100 hover:text-blue-900 active:scale-95"
+                      title="Click to use this username"
+                    >
+                      {sug}
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
 
@@ -334,7 +445,7 @@ export default function RegisterPage() {
 
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || usernameAvailable === false}
             className="mt-1 w-full rounded-2xl bg-slate-900 py-3.5 text-sm font-bold text-white transition hover:bg-slate-700 disabled:opacity-60"
           >
             {submitting ? "Creating account…" : "Start Free Trial"}
