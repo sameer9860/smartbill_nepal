@@ -147,6 +147,15 @@ export const authApi = {
       auth: false,
     });
   },
+  checkEmail(email: string) {
+    return apiRequest<{
+      available: boolean;
+      detail?: string;
+    }>(`/api/auth/check-email/?email=${encodeURIComponent(email)}`, {
+      method: "GET",
+      auth: false,
+    });
+  },
   register(payload: {
     username: string;
     email: string;
