@@ -353,3 +353,35 @@ class CheckUsernameAPITests(TestCase):
         self.assertFalse(resp.data['available'])
         self.assertIn('must not contain spaces', resp.data['detail'])
 
+
+class CheckEmailAPITests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            username='userone',
+            email='user@example.com',
+            password='Password123!',
+        )
+
+    def test_check_email_available(self):
+        resp = self.client.get('/api/auth/check-email/?email=newuser@example.com')
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(resp.data['available'])
+
+    def test_check_email_taken(self):
+        resp = self.client.get('/api/auth/check-email/?email=user@example.com')
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(resp.data['available'])
+        self.assertIn('already taken', resp.data['detail'])
+
+    def test_check_email_case_insensitive(self):
+        resp = self.client.get('/api/auth/check-email/?email=USER@EXAMPLE.COM')
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(resp.data['available'])
+        self.assertIn('already taken', resp.data['detail'])
+
+    def test_check_email_empty_or_incomplete(self):
+        resp = self.client.get('/api/auth/check-email/?email=incomplete')
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(resp.data['available'])
+
