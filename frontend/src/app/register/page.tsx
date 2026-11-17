@@ -111,6 +111,10 @@ export default function RegisterPage() {
   const [usernameSuggestions, setUsernameSuggestions] = useState<string[]>([]);
   const [usernameFeedback, setUsernameFeedback] = useState<string>("");
 
+  const [emailChecking, setEmailChecking] = useState(false);
+  const [emailAvailable, setEmailAvailable] = useState<boolean | null>(null);
+  const [emailFeedback, setEmailFeedback] = useState<string>("");
+
   function update(field: keyof typeof form, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
@@ -167,6 +171,50 @@ export default function RegisterPage() {
     });
   }
 
+  /* ── real-time email availability check with debounce ── */
+  useEffect(() => {
+    const raw = form.email.trim().toLowerCase();
+    if (!raw) {
+      setEmailChecking(false);
+      setEmailAvailable(null);
+      setEmailFeedback("");
+      return;
+    }
+
+    if (!raw.includes("@") || !raw.includes(".")) {
+      setEmailChecking(false);
+      setEmailAvailable(null);
+      setEmailFeedback("");
+      return;
+    }
+
+    let active = true;
+    setEmailChecking(true);
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await authApi.checkEmail(raw);
+        if (!active) return;
+        if (res.available) {
+          setEmailAvailable(true);
+          setEmailFeedback("Email is available");
+        } else {
+          setEmailAvailable(false);
+          setEmailFeedback(res.detail || "This email is already taken, please choose another one.");
+        }
+      } catch {
+        if (!active) return;
+      } finally {
+        if (active) setEmailChecking(false);
+      }
+    }, 300);
+
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [form.email]);
+
   /* ── real-time password strength checks ── */
   const pw = form.password;
   const checks = useMemo(
@@ -201,6 +249,10 @@ export default function RegisterPage() {
     /* Client-side guard */
     if (usernameAvailable === false) {
       setFieldErrors({ username: "Username is already taken. Please choose another." });
+      return;
+    }
+    if (emailAvailable === false) {
+      setFieldErrors({ email: "This email is already taken, please choose another one." });
       return;
     }
     if (!allValid) {
@@ -353,12 +405,41 @@ export default function RegisterPage() {
               type="email"
               icon={Mail}
               value={form.email}
-              onChange={(v) => update("email", v)}
+              onChange={(v) => {
+                update("email", v);
+                if (fieldErrors.email) {
+                  setFieldErrors((prev) => {
+                    const next = { ...prev };
+                    delete next.email;
+                    return next;
+                  });
+                }
+              }}
               autoComplete="email"
             />
-            {fieldErrors.email && (
+            {fieldErrors.email ? (
               <p className="mt-1 pl-1 text-xs font-medium text-red-600">{fieldErrors.email}</p>
-            )}
+            ) : emailChecking ? (
+              <p className="mt-1 pl-1 text-xs font-medium text-slate-400 animate-pulse">
+                Checking email availability…
+              </p>
+            ) : emailFeedback ? (
+              <p
+                className={`mt-1 pl-1 text-xs font-medium ${
+                  emailAvailable === false
+                    ? "text-red-600"
+                    : emailAvailable === true
+                      ? "text-emerald-600"
+                      : "text-slate-500"
+                }`}
+              >
+                {emailAvailable === false ? (
+                  emailFeedback
+                ) : emailAvailable === true ? (
+                  `✓ ${emailFeedback}`
+                ) : null}
+              </p>
+            ) : null}
           </div>
 
           {/* ── Password ── */}
@@ -445,7 +526,7 @@ export default function RegisterPage() {
 
           <button
             type="submit"
-            disabled={submitting || usernameAvailable === false}
+            disabled={submitting || usernameAvailable === false || emailAvailable === false}
             className="mt-1 w-full rounded-2xl bg-slate-900 py-3.5 text-sm font-bold text-white transition hover:bg-slate-700 disabled:opacity-60"
           >
             {submitting ? "Creating account…" : "Start Free Trial"}
