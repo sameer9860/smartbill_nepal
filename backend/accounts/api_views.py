@@ -176,6 +176,29 @@ class CheckUsernameAPIView(APIView):
         )
 
 
+class CheckEmailAPIView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        email = request.query_params.get('email', '').strip().lower()
+        if not email:
+            return Response({'available': True})
+
+        if '@' not in email or '.' not in email.split('@')[-1]:
+            return Response({'available': True})
+
+        taken = User.objects.filter(email__iexact=email).exists()
+        if taken:
+            return Response(
+                {
+                    'available': False,
+                    'detail': 'This email is already taken, please choose another one.',
+                }
+            )
+
+        return Response({'available': True})
+
+
 class LoginAPIView(APIView):
     permission_classes = [permissions.AllowAny]
 
