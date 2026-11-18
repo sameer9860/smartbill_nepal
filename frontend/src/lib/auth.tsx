@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import { ApiError, authApi, clearTokens, getAccessToken, setTokens } from "./api";
 import type { User } from "./types";
@@ -65,6 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await authApi.login({ username, password });
       setTokens(data.tokens.access, data.tokens.refresh);
       setUser(data.user);
+      toast.success(`Welcome back ${data.user.username} signed in successfully!`);
       router.push("/dashboard");
     },
     [router]
@@ -89,6 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(() => {
     clearTokens();
     setUser(null);
+    toast.success("Logged out!");
     router.push("/login");
   }, [router]);
 
